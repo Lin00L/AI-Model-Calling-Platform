@@ -1,0 +1,4548 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Great Mind - Memory Console</title>
+
+    <!-- 字体与图标 -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <!-- 代码高亮样式 -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.7.0/styles/atom-one-dark-reasonable.min.css">
+    
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.8/katex.min.css">
+
+    <style>
+ /* =========================================
+       1. Design System & Variables (设计系统)
+       ========================================= */
+    :root {
+        /* --- 核心色板 (HSL for better alpha control) --- */
+        --hue-primary: 236;    /* Indigo */
+        --hue-accent: 38;      /* Amber/Gold */
+        --hue-danger: 345;     /* Red */
+        --hue-success: 150;    /* Emerald */
+
+        /* Light Mode Colors */
+        --primary: hsl(var(--hue-primary), 80%, 60%);
+        --primary-hover: hsl(var(--hue-primary), 80%, 50%);
+        --primary-light: hsl(var(--hue-primary), 90%, 96%);
+        --primary-subtle: hsl(var(--hue-primary), 60%, 92%); /* 极淡的背景 */
+
+        --bg-body: #f1f5f9;         /* 更有质感的浅灰背景 */
+        --bg-surface: #ffffff;
+        --bg-surface-glass: rgba(255, 255, 255, 0.75); /* 高透光玻璃 */
+        --bg-surface-2: #f8fafc;    /* 次级表面 */
+
+        --text-main: #1e293b;       /* Slate 800 - 更深沉的黑色 */
+        --text-sec: #64748b;        /* Slate 500 */
+        --text-muted: #94a3b8;      /* Slate 400 */
+
+        --border: #e2e8f0;
+        --border-light: rgba(255, 255, 255, 0.6);
+        --border-hover: #cbd5e1;
+
+        --accent-perm: hsl(var(--hue-accent), 90%, 50%);
+        --accent-perm-bg: hsl(var(--hue-accent), 80%, 96%);
+
+        --danger: hsl(var(--hue-danger), 80%, 60%);
+        --success: hsl(var(--hue-success), 70%, 50%);
+
+        /* --- 阴影与光效 (Shadows & Glows) --- */
+        --shadow-xs: 0 1px 2px rgba(0, 0, 0, 0.03);
+        --shadow-sm: 0 2px 4px -1px rgba(0, 0, 0, 0.04), 0 2px 4px -1px rgba(0, 0, 0, 0.02);
+        --shadow-md: 0 8px 16px -4px rgba(0, 0, 0, 0.06), 0 4px 6px -2px rgba(0, 0, 0, 0.03);
+        --shadow-lg: 0 20px 25px -5px rgba(0, 0, 0, 0.08), 0 8px 10px -6px rgba(0, 0, 0, 0.02);
+        --shadow-glass: 0 8px 32px 0 rgba(31, 38, 135, 0.07);
+
+        --glow-primary: 0 0 20px rgba(99, 102, 241, 0.4);
+
+        /* --- 布局参数 --- */
+        --sidebar-width: 280px;
+        --header-height: 64px;
+        --radius-sm: 6px;
+        --radius-md: 10px;
+        --radius-lg: 16px;
+        --radius-xl: 24px;
+
+        /* 动画曲线 */
+        --ease-spring: cubic-bezier(0.175, 0.885, 0.32, 1.15); /* 有弹性的动效 */
+        --ease-smooth: cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    [data-theme="dark"] {
+        /* Dark Mode Colors - 重新调色，避免纯黑，使用高级的深蓝灰 */
+        --primary: hsl(var(--hue-primary), 70%, 65%);
+        --primary-hover: hsl(var(--hue-primary), 70%, 75%);
+        --primary-light: rgba(99, 102, 241, 0.15);
+        --primary-subtle: rgba(99, 102, 241, 0.08);
+
+        --bg-body: #0b0f19;         /* 深空蓝黑 */
+        --bg-surface: #111827;      /* 稍亮的面板 */
+        --bg-surface-glass: rgba(17, 24, 39, 0.8);
+        --bg-surface-2: #1f2937;
+
+        --text-main: #f8fafc;
+        --text-sec: #94a3b8;
+        --text-muted: #64748b;
+
+        --border: #374151;
+        --border-light: rgba(255, 255, 255, 0.08);
+        --border-hover: #4b5563;
+
+        --accent-perm: hsl(var(--hue-accent), 90%, 60%);
+        --accent-perm-bg: rgba(251, 191, 36, 0.15);
+
+        --shadow-glass: 0 8px 32px 0 rgba(0, 0, 0, 0.3);
+    }
+
+    /* =========================================
+       2. Global Reset & Typography
+       ========================================= */
+    * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; outline: none; }
+
+    body {
+        font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+        background-color: var(--bg-body);
+        color: var(--text-main);
+        height: 100dvh; /* 适配移动端动态高度 */
+        width: 100vw;
+        display: flex;
+        overflow: hidden;
+        font-size: 15px;
+        line-height: 1.6;
+        transition: background-color 0.4s ease, color 0.3s ease;
+    }
+
+    /* 优化滚动条 - 极简风格 */
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb {
+        background: var(--border);
+        border-radius: 10px;
+        border: 2px solid transparent;
+        background-clip: content-box;
+    }
+    ::-webkit-scrollbar-thumb:hover { background-color: var(--text-muted); }
+
+    /* 通用玻璃拟态类 */
+    .glass {
+        backdrop-filter: blur(16px);
+        -webkit-backdrop-filter: blur(16px);
+        background: var(--bg-surface-glass);
+        border-bottom: 1px solid var(--border-light);
+    }
+
+    /* 按钮通用重置 */
+    button { font-family: inherit; }
+
+    /* --- 新增：图片全局约束与美化 --- */
+    /* 强制所有图片自适应容器宽度，防止溢出 */
+    img {
+        max-width: 100%;
+        height: auto;
+        display: block; /* 消除图片底部默认间隙 */
+    }
+
+    /* 专门针对聊天气泡内的图片进行美化 */
+    .bubble img {
+        border-radius: var(--radius-md);
+        margin: 16px 0; /* 增加上下间距，让图文混排更舒适 */
+        border: 1px solid var(--border-light);
+        box-shadow: var(--shadow-sm);
+    }
+    /* 用户发送的图片不用边框，因为背景较深 */
+    .msg-row.user .bubble img { border: none; box-shadow: none; }
+
+    /* =========================================
+       3. Sidebar (侧边栏) - 沉浸式设计
+       ========================================= */
+    .sidebar {
+        width: var(--sidebar-width);
+        background: var(--bg-surface);
+        border-right: 1px solid var(--border);
+        display: flex;
+        flex-direction: column;
+        z-index: 50;
+        overflow: hidden;
+        transition: all 0.4s var(--ease-smooth);
+        position: relative;
+        flex-shrink: 0;
+    }
+
+    .sidebar.collapsed {
+        width: 0;
+        opacity: 0;
+        border-right: none;
+        transform: translateX(-20px);
+    }
+
+    /* 品牌 Logo 区域 */
+    .brand {
+        padding: 24px 24px 20px;
+        font-size: 20px;
+        font-weight: 800;
+        color: var(--text-main);
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        letter-spacing: -0.5px;
+        /* 品牌文字渐变 */
+        background: linear-gradient(135deg, var(--text-main) 0%, var(--primary) 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text; /* 标准属性兼容 */
+    }
+    .brand i {
+        color: var(--primary);
+        font-size: 22px;
+        -webkit-text-fill-color: initial; /* 恢复图标颜色 */
+        filter: drop-shadow(0 4px 6px rgba(99, 102, 241, 0.3));
+    }
+
+    /* 新建对话按钮 - 突出显示 */
+    .sidebar-controls { padding: 0 20px 20px; }
+
+    .btn-new-chat {
+        width: 100%;
+        padding: 12px;
+        background: var(--primary);
+        color: #fff;
+        border: none;
+        border-radius: var(--radius-md);
+        font-weight: 600;
+        font-size: 14px;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        box-shadow: var(--shadow-md), var(--glow-primary);
+        transition: all 0.3s var(--ease-spring);
+        position: relative;
+        overflow: hidden;
+    }
+
+    /* 按钮光泽动画 */
+    .btn-new-chat::after {
+        content: '';
+        position: absolute;
+        top: 0; left: -100%;
+        width: 100%; height: 100%;
+        background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+        transition: 0.5s;
+    }
+    .btn-new-chat:hover::after { left: 100%; }
+    .btn-new-chat:hover { transform: translateY(-2px); box-shadow: var(--shadow-lg), var(--glow-primary); }
+    .btn-new-chat:active { transform: translateY(1px); }
+
+    /* 聊天列表 */
+    .chat-list {
+        flex: 1;
+        overflow-y: auto;
+        padding: 10px 16px;
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+    }
+
+    .chat-item {
+        padding: 12px 14px;
+        border-radius: var(--radius-md);
+        cursor: pointer;
+        color: var(--text-sec);
+        font-size: 14px;
+        font-weight: 500;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        transition: all 0.2s ease;
+        border: 1px solid transparent;
+        position: relative;
+    }
+
+    /* 列表项悬停与激活 */
+    .chat-item:hover {
+        background: var(--bg-surface-2);
+        color: var(--text-main);
+        border-color: var(--border);
+    }
+
+    .chat-item.active {
+        background: var(--primary-subtle);
+        color: var(--primary);
+        border-color: var(--primary-light);
+        font-weight: 600;
+    }
+    /* 激活状态左侧指示条 */
+    .chat-item.active::before {
+        content: '';
+        position: absolute;
+        left: -4px;
+        top: 50%;
+        transform: translateY(-50%);
+        width: 4px;
+        height: 16px;
+        background: var(--primary);
+        border-radius: 4px;
+    }
+
+    .chat-item-title {
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        max-width: 180px;
+    }
+
+    /* 列表项操作图标 */
+    .chat-actions {
+        display: flex;
+        gap: 6px;
+        opacity: 0;
+        transform: translateX(10px);
+        transition: all 0.2s ease;
+    }
+    .chat-item:hover .chat-actions { opacity: 1; transform: translateX(0); }
+
+    .chat-actions i {
+        padding: 6px;
+        font-size: 12px;
+        border-radius: 6px;
+        color: var(--text-muted);
+        background: var(--bg-surface); /* 防止背景透出干扰 */
+        border: 1px solid var(--border);
+        box-shadow: var(--shadow-xs);
+        transition: all 0.2s;
+    }
+    .chat-actions i:hover { transform: scale(1.1); color: var(--text-main); border-color: var(--primary); }
+    .chat-actions .fa-trash-can:hover { color: var(--danger); border-color: var(--danger); background: #fff0f0; }
+
+    /* 侧边栏底部 */
+    .sidebar-footer {
+        padding: 20px;
+        border-top: 1px solid var(--border);
+        background: var(--bg-surface);
+        display: flex;
+        align-items: center;
+        gap: 12px;
+    }
+
+    /* =========================================
+       4. Main Layout & Header (主布局与顶部)
+       ========================================= */
+    .main {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        position: relative;
+        background: var(--bg-body);
+        /* 背景纹理 (Dot Pattern) */
+        background-image: radial-gradient(var(--border) 1px, transparent 1px);
+        background-size: 32px 32px;
+    }
+
+    /* Header 样式 */
+    .header {
+        height: var(--header-height);
+        padding: 0 24px;
+        /* 毛玻璃已经在 .glass 定义 */
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        z-index: 40;
+        position: sticky;
+        top: 0;
+        box-shadow: var(--shadow-sm);
+    }
+
+    .header-left { display: flex; align-items: center; gap: 20px; flex: 1; min-width: 0; }
+
+   /* 1. 默认状态 (电脑端)：隐藏手机按钮，显示桌面按钮 */
+    .mobile-menu-btn {
+        display: none !important;
+    }
+    .desktop-menu-btn {
+        display: flex !important;
+    }
+
+    /* 2. 手机状态 (屏幕小于 768px)：隐藏桌面按钮，显示手机按钮 */
+    @media (max-width: 768px) {
+        .mobile-menu-btn {
+            display: flex !important;
+        }
+        .desktop-menu-btn {
+            display: none !important;
+        }
+    }
+    /* 通用图标按钮 (Header用) */
+    .btn-icon {
+        width: 38px;
+        height: 38px;
+        border-radius: var(--radius-md);
+        border: 1px solid transparent;
+        background: transparent;
+        color: var(--text-sec);
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: all 0.2s;
+        font-size: 16px;
+    }
+    .btn-icon:hover {
+        background: var(--bg-surface);
+        color: var(--text-main);
+        border-color: var(--border);
+        box-shadow: var(--shadow-sm);
+    }
+
+    /* 标题与模型选择区域 */
+    .chat-meta {
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        min-width: 0;
+    }
+    .chat-title {
+        font-weight: 700;
+        font-size: 15px;
+        color: var(--text-main);
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    /* 模型选择器行 */
+    .selectors-row {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        margin-top: 2px;
+    }
+
+    /* 下拉菜单美化 */
+    .model-selector {
+        background: transparent;
+        border: 1px solid transparent;
+        color: var(--text-sec);
+        font-size: 12px;
+        font-family: inherit;
+        cursor: pointer;
+        padding: 2px 6px;
+        border-radius: 4px;
+        transition: all 0.2s;
+        /* 去除默认外观 */
+        -webkit-appearance: none;
+        appearance: none;
+        font-weight: 500;
+    }
+    .model-selector:hover {
+        background: var(--bg-surface);
+        border-color: var(--border);
+        color: var(--primary);
+    }
+    .model-selector:focus { outline: none; border-color: var(--primary); }
+
+    /* 顶部右侧按钮组 */
+    .header-actions { display: flex; gap: 10px; }
+
+    .btn-header {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 8px 16px;
+        background: var(--bg-surface);
+        border: 1px solid var(--border);
+        border-radius: var(--radius-md);
+        color: var(--text-main);
+        font-size: 13px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.2s;
+        box-shadow: var(--shadow-xs);
+    }
+    .btn-header:hover {
+        border-color: var(--primary);
+        color: var(--primary);
+        background: var(--bg-surface);
+        transform: translateY(-1px);
+        box-shadow: var(--shadow-md);
+    }
+    .btn-header i { font-size: 14px; }
+    /* =========================================
+       5. Chat Container & Messages (聊天区域)
+       ========================================= */
+    .chat-container {
+        flex: 1;
+        overflow-y: auto;
+        padding: 20px 24px 140px 24px; /* 底部留白给悬浮输入框 */
+        display: flex;
+        flex-direction: column;
+        gap: 28px; /* 消息间距 */
+        scroll-behavior: smooth;
+    }
+
+    /* 空状态 (Empty State) */
+    .empty-state {
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        color: var(--text-muted);
+        text-align: center;
+        animation: fadeIn 0.5s ease;
+    }
+    .empty-state i {
+        margin-bottom: 24px;
+        opacity: 0.8;
+        filter: drop-shadow(0 4px 6px rgba(0,0,0,0.05));
+    }
+    .empty-state h3 {
+        font-size: 20px;
+        font-weight: 700;
+        color: var(--text-main);
+        margin-bottom: 8px;
+    }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+    /* 消息行布局 */
+    .msg-row {
+        display: flex;
+        gap: 16px;
+        max-width: 900px;
+        margin: 0 auto;
+        width: 100%;
+        animation: slideInMsg 0.3s cubic-bezier(0.25, 1, 0.5, 1);
+    }
+    @keyframes slideInMsg { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+    .msg-row.user { justify-content: flex-end; }
+
+    /* 头像 */
+    .avatar {
+        width: 36px;
+        height: 36px;
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 14px;
+        font-weight: 600;
+        flex-shrink: 0;
+        box-shadow: var(--shadow-sm);
+    }
+    .avatar.ai {
+        background: linear-gradient(135deg, #fff 0%, #f1f5f9 100%);
+        border: 1px solid var(--border);
+        color: var(--primary);
+    }
+    .avatar.user {
+        background: linear-gradient(135deg, var(--text-sec) 0%, var(--text-main) 100%);
+        color: white;
+        order: 2;
+    }
+
+    /* 气泡本体 (Bubble) */
+    .bubble {
+        padding: 18px 22px;
+        border-radius: var(--radius-lg);
+        box-shadow: var(--shadow-sm);
+        max-width: 85%;
+        position: relative;
+        line-height: 1.7;
+        font-size: 15px;
+        word-wrap: break-word;
+    }
+
+    /* AI 气泡样式 */
+    .msg-row.model .bubble {
+        background: var(--bg-surface);
+        border: 1px solid var(--border);
+        color: var(--text-main);
+        border-top-left-radius: 4px; /* 视觉引导 */
+    }
+
+    /* 用户气泡样式 */
+    .msg-row.user .bubble {
+        background: linear-gradient(135deg, var(--primary) 0%, var(--primary-hover) 100%);
+        color: white;
+        border: 1px solid transparent;
+        border-top-right-radius: 4px;
+        box-shadow: var(--shadow-md), var(--glow-primary);
+    }
+    /* 修正用户气泡内的链接/代码颜色 */
+    .msg-row.user .bubble a { color: #e0e7ff; }
+
+    /* 等待回复动画 (Typing Indicator) */
+    .typing-indicator {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        padding: 16px 24px;
+        background: var(--bg-surface);
+        border: 1px solid var(--border);
+        border-radius: var(--radius-lg);
+        border-top-left-radius: 4px;
+        width: fit-content;
+        box-shadow: var(--shadow-sm);
+        margin-left: 52px; /* Avatar width + gap */
+        margin-bottom: 20px;
+    }
+    .dot {
+        width: 8px;
+        height: 8px;
+        background-color: var(--text-muted);
+        border-radius: 50%;
+        animation: typingBounce 1.4s infinite ease-in-out both;
+    }
+    .dot:nth-child(1) { animation-delay: -0.32s; }
+    .dot:nth-child(2) { animation-delay: -0.16s; }
+    @keyframes typingBounce {
+        0%, 80%, 100% { transform: scale(0); opacity: 0.5; }
+        40% { transform: scale(1); opacity: 1; }
+    }
+
+    /* 消息底部栏 (Footer) */
+    .bubble-footer {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 12px;
+        padding-top: 12px;
+        margin-top: 12px;
+        border-top: 1px solid rgba(0, 0, 0, 0.05);
+    }
+    .msg-row.user .bubble-footer { border-top-color: rgba(255, 255, 255, 0.2); }
+
+    /* 标签与操作按钮 */
+    .tags-area { display: flex; gap: 6px; flex-wrap: wrap; }
+
+    .tag {
+        font-size: 11px;
+        padding: 4px 10px !important;
+        border-radius: 20px;
+        cursor: pointer;
+        font-weight: 600;
+        display: flex;
+        align-items: center;
+        gap: 4px;
+        transition: 0.2s;
+        border: 1px solid transparent;
+        user-select: none;
+        height: 24px;
+    }
+    .tag-mem-active { background: #dcfce7; color: #166534; border-color: #bbf7d0; }
+    .tag-mem-inactive { background: rgba(0,0,0,0.03); color: var(--text-muted); }
+    .tag-perm { background: #fffbeb; color: #b45309; border-color: #fde68a; }
+
+    [data-theme="dark"] .tag-mem-active { background: rgba(22, 163, 74, 0.2); color: #86efac; border-color: rgba(22, 163, 74, 0.3); }
+    [data-theme="dark"] .tag-perm { background: rgba(251, 191, 36, 0.1); color: #fcd34d; border-color: rgba(251, 191, 36, 0.2); }
+
+    .actions-area {
+        display: flex;
+        gap: 4px;
+        opacity: 0;
+        transition: opacity 0.2s;
+    }
+    .bubble:hover .actions-area { opacity: 1; }
+
+    .action-btn {
+        background: rgba(0, 0, 0, 0.03);
+        border: none;
+        color: var(--text-sec);
+        cursor: pointer;
+        padding: 4px 8px !important;
+        height: 28px;
+        border-radius: 6px;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        transition: all 0.2s;
+    }
+    .msg-row.user .action-btn { background: rgba(255,255,255,0.15); color: rgba(255,255,255,0.9); }
+    .action-btn:hover { background: rgba(0,0,0,0.08); color: var(--text-main); }
+    .msg-row.user .action-btn:hover { background: rgba(255,255,255,0.25); color: #fff; }
+
+    /* =========================================
+       6. Input Area (悬浮输入框)
+       ========================================= */
+    .input-wrapper {
+        position: absolute;
+        bottom: 30px;
+        left: 0;
+        right: 0;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        padding: 0 20px;
+        z-index: 30;
+        pointer-events: none; /* 让wrapper本身不阻挡点击，只有内容阻挡 */
+    }
+
+    /* 附件预览容器 */
+    .preview-area {
+        pointer-events: auto;
+        width: 100%;
+        max-width: 800px;
+        display: flex;
+        gap: 12px;
+        padding: 12px;
+        margin-bottom: 12px;
+        background: var(--bg-surface-glass);
+        backdrop-filter: blur(12px);
+        border: 1px solid var(--border);
+        border-radius: var(--radius-lg);
+        box-shadow: var(--shadow-lg);
+        overflow-x: auto;
+    }
+    .preview-item {
+        position: relative;
+        width: 64px;
+        height: 64px;
+        border-radius: 8px;
+        border: 1px solid var(--border);
+        background-size: cover;
+        background-position: center;
+        background-color: var(--bg-surface);
+        flex-shrink: 0;
+        display: flex; align-items: center; justify-content: center;
+    }
+    .preview-close {
+        position: absolute;
+        top: -6px; right: -6px;
+        background: var(--danger);
+        color: white;
+        border-radius: 50%;
+        width: 18px; height: 18px;
+        font-size: 10px;
+        display: flex; align-items: center; justify-content: center;
+        cursor: pointer;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+    }
+
+    .input-box {
+        pointer-events: auto;
+        width: 100%;
+        max-width: 800px;
+        background: var(--bg-surface-glass);
+        border: 1px solid var(--border-light);
+        border-radius: var(--radius-xl);
+        padding: 8px 8px 8px 16px;
+        box-shadow: var(--shadow-glass), var(--shadow-lg);
+        display: flex;
+        align-items: flex-end;
+        gap: 12px;
+        backdrop-filter: blur(20px);
+        -webkit-backdrop-filter: blur(20px);
+        transition: box-shadow 0.3s, border-color 0.3s;
+    }
+    .input-box:focus-within {
+        border-color: var(--primary);
+        box-shadow: var(--shadow-glass), 0 0 0 2px var(--primary-light);
+    }
+
+    .input-box textarea {
+        flex: 1;
+        background: transparent;
+        border: none;
+        padding: 14px 0;
+        max-height: 200px;
+        resize: none;
+        outline: none;
+        font-family: inherit;
+        font-size: 16px;
+        color: var(--text-main);
+        line-height: 1.5;
+    }
+
+    .btn-attach {
+        color: var(--text-muted);
+        background: transparent;
+        border: none;
+        width: 40px; height: 40px;
+        border-radius: 50%;
+        cursor: pointer;
+        transition: 0.2s;
+        display: flex; align-items: center; justify-content: center;
+        margin-bottom: 6px;
+    }
+    .btn-attach:hover { background: var(--bg-body); color: var(--text-main); }
+
+    .btn-send {
+        width: 44px;
+        height: 44px;
+        border-radius: 14px;
+        background: var(--primary);
+        color: white;
+        border: none;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: all 0.2s var(--ease-spring);
+        margin-bottom: 4px;
+        font-size: 16px;
+        box-shadow: var(--shadow-md);
+    }
+    .btn-send:hover { background: var(--primary-hover); transform: scale(1.05); }
+    .btn-send:active { transform: scale(0.95); }
+
+    /* =========================================
+       7. Right Drawer (永久记忆抽屉)
+       ========================================= */
+    .drawer {
+        position: fixed;
+        top: 0;
+        right: -400px; /* Hidden */
+        width: 380px;
+        height: 100%;
+        background: var(--bg-surface);
+        border-left: 1px solid var(--border);
+        box-shadow: -10px 0 30px rgba(0,0,0,0.1);
+        z-index: 100;
+        transition: right 0.4s cubic-bezier(0.19, 1, 0.22, 1); /* Exponential ease */
+        display: flex;
+        flex-direction: column;
+    }
+    .drawer.open { right: 0; }
+
+    .drawer-header {
+        padding: 24px;
+        border-bottom: 1px solid var(--border);
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        font-weight: 700;
+        font-size: 16px;
+        color: var(--text-main);
+        background: var(--bg-surface-2);
+    }
+
+    .drawer-body {
+        flex: 1;
+        overflow-y: auto;
+        padding: 24px;
+        background: var(--bg-body);
+    }
+
+    .perm-item {
+        background: var(--bg-surface);
+        border: 1px solid var(--border);
+        border-radius: var(--radius-md);
+        padding: 16px;
+        margin-bottom: 16px;
+        box-shadow: var(--shadow-sm);
+        transition: transform 0.2s;
+    }
+    .perm-item:hover { transform: translateY(-2px); box-shadow: var(--shadow-md); }
+
+    .perm-header {
+        display: flex;
+        justify-content: space-between;
+        margin-bottom: 10px;
+        font-size: 12px;
+        color: var(--text-muted);
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+    .perm-edit-area {
+        width: 100%;
+        background: var(--bg-body);
+        border: 1px solid var(--border);
+        border-radius: 6px;
+        padding: 12px;
+        font-size: 13px;
+        font-family: 'JetBrains Mono', 'Menlo', monospace;
+        color: var(--text-main);
+        min-height: 222px;
+        resize: vertical;
+        line-height: 1.5;
+    }
+    .perm-edit-area:focus { border-color: var(--primary); box-shadow: 0 0 0 2px var(--primary-light); }
+
+    /* =========================================
+       8. Modals & Overlay (模态框)
+       ========================================= */
+    .modal-overlay {
+        display: none;
+        position: fixed;
+        top: 0; left: 0; width: 100%; height: 100%;
+        background: rgba(0, 0, 0, 0.4);
+        backdrop-filter: blur(8px);
+        z-index: 200;
+        align-items: center;
+        justify-content: center;
+        opacity: 0;
+        transition: opacity 0.3s;
+    }
+    .modal-overlay.active { display: flex; opacity: 1; }
+
+    .modal {
+        background: var(--bg-surface);
+        width: 90%;
+        max-width: 480px;
+        border-radius: var(--radius-xl);
+        border: 1px solid var(--border-light);
+        box-shadow: var(--shadow-glass), var(--shadow-lg);
+        padding: 32px;
+        transform: scale(0.95) translateY(10px);
+        transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+    .modal-overlay.active .modal { transform: scale(1) translateY(0); }
+
+    .modal-title { font-size: 20px; font-weight: 700; margin-bottom: 12px; color: var(--text-main); }
+    .modal-desc { font-size: 14px; color: var(--text-sec); margin-bottom: 24px; line-height: 1.6; }
+
+    .modal-input {
+        width: 100%;
+        padding: 14px;
+        border: 1px solid var(--border);
+        border-radius: var(--radius-md);
+        background: var(--bg-body);
+        color: var(--text-main);
+        font-size: 15px;
+        margin-bottom: 24px;
+        outline: none;
+        transition: 0.2s;
+    }
+    .modal-input:focus { border-color: var(--primary); box-shadow: 0 0 0 3px var(--primary-light); }
+
+    .modal-footer { display: flex; justify-content: flex-end; gap: 12px; }
+
+    .btn {
+        padding: 10px 20px;
+        border-radius: var(--radius-md);
+        font-size: 14px;
+        font-weight: 600;
+        cursor: pointer;
+        border: none;
+        transition: 0.2s;
+    }
+    .btn-ghost { background: transparent; color: var(--text-sec); }
+    .btn-ghost:hover { background: var(--bg-body); color: var(--text-main); }
+
+    .btn-primary { background: var(--primary); color: white; box-shadow: var(--shadow-md); }
+    .btn-primary:hover { background: var(--primary-hover); transform: translateY(-1px); }
+
+    .btn-danger { background: var(--danger); color: white; }
+    .btn-danger:hover { background: hsl(var(--hue-danger), 80%, 50%); }
+
+    /* =========================================
+       9. Toast & Utility (通知与工具)
+       ========================================= */
+    .toast-container {
+        position: fixed;
+        top: 30px;
+        left: 50%;
+        transform: translateX(-50%);
+        z-index: 300;
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+        width: max-content;
+        max-width: 90%;
+    }
+    .toast {
+        background: var(--bg-surface);
+        color: var(--text-main);
+        padding: 12px 20px;
+        border-radius: 50px;
+        box-shadow: var(--shadow-lg);
+        border: 1px solid var(--border);
+        font-size: 14px;
+        font-weight: 500;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        animation: slideDownToast 0.4s var(--ease-spring);
+    }
+    @keyframes slideDownToast {
+        from { transform: translateY(-30px); opacity: 0; }
+        to { transform: translateY(0); opacity: 1; }
+    }
+    .toast-success i { color: var(--success); }
+    .toast-error i { color: var(--danger); }
+
+    /* Markdown Code Block Styles */
+    .markdown-body pre {
+        background: #1e1e1e !important;
+        border-radius: var(--radius-md);
+        padding: 16px;
+        position: relative;
+        margin: 16px 0;
+        border: 1px solid rgba(255,255,255,0.1);
+        overflow-x: auto;
+    }
+    .markdown-body code { font-family: 'JetBrains Mono', monospace; font-size: 13px; }
+
+    .code-copy-btn {
+        position: absolute;
+        top: 8px; right: 8px;
+        background: rgba(255, 255, 255, 0.1);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        color: #a0a0a0;
+        font-size: 12px;
+        padding: 4px 10px !important;
+        height: 28px;
+        border-radius: 6px;
+        cursor: pointer;
+        opacity: 0;
+        transition: all 0.2s;
+    }
+    .markdown-body pre:hover .code-copy-btn { opacity: 1; }
+    .code-copy-btn:hover { background: rgba(255, 255, 255, 0.2); color: white; }
+    .code-copy-btn.copied { background: var(--success); color: white; border-color: transparent; }
+
+/* =========================================
+       10. Mobile Responsive Fix (经过严格审查的最终修正版)
+       ========================================= */
+    .mobile-sidebar-close { display: none; } /* 桌面端默认隐藏 */
+
+    @media (max-width: 768px) {
+        /* --- 1. 视口与基础布局锁死 --- */
+        html, body {
+            height: 100dvh; /* 使用动态视口高度适配移动端浏览器 */
+            width: 100%;
+            margin: 0;
+            padding: 0;
+            overflow: hidden; /* 禁止整个页面滚动，只允许内部滚动 */
+        }
+
+        .main {
+            display: flex;
+            flex-direction: column;
+            height: 100%; /* 继承 body 高度 */
+            width: 100%;
+            overflow: hidden; /* 防止子元素溢出撑开页面 */
+            position: relative;
+        }
+
+        /* --- 2. Header 布局重构 (防溢出) --- */
+        .header {
+            flex-shrink: 0; /* 禁止头部被压缩 */
+            height: 60px;
+            padding: 0 8px; /* 减小内边距 */
+            gap: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            width: 100%;
+            background: var(--bg-surface-glass); /* 确保背景存在 */
+        }
+
+        /* 左侧菜单按钮 */
+        .mobile-menu-btn {
+            display: flex;
+            flex-shrink: 0; /* 禁止被压缩 */
+        }
+        .desktop-menu-btn { display: none !important; }
+
+        /* 中间元数据区 (标题+下拉) - 关键防溢出区 */
+        .header-left {
+            flex: 1; /* 占据剩余所有空间 */
+            display: flex;
+            flex-direction: column; /* 上下排列 */
+            justify-content: center;
+            min-width: 0; /* 核心：允许 Flex 子项收缩到 0，防止撑破 */
+            margin-right: 0; /* 重置可能存在的 margin */
+        }
+
+        .chat-meta {
+            width: 100%;
+            min-width: 0;
+        }
+
+        .chat-title {
+            font-size: 14px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis; /* 超长省略 */
+            max-width: 100%;
+            line-height: 1.4;
+        }
+
+        /* 下拉选择器容器：强制横向滚动 */
+        .selectors-row {
+            display: flex;
+            gap: 6px;
+            width: 100%;
+            overflow-x: auto; /* 允许横向滑动查看更多模型 */
+            padding-bottom: 2px;
+            -webkit-overflow-scrolling: touch;
+            scrollbar-width: none; /* Firefox 隐藏滚动条 */
+        }
+        .selectors-row::-webkit-scrollbar { display: none; } /* Chrome/Safari 隐藏滚动条 */
+
+        .model-selector {
+            font-size: 11px;
+            padding: 1px 4px;
+            height: 20px;
+            max-width: none; /* 取消宽度限制，由容器控制 */
+            background: rgba(0,0,0,0.05);
+            border-radius: 4px;
+            flex-shrink: 0; /* 防止选项被挤压变形 */
+        }
+
+        /* 右侧功能按钮区 */
+        .header-actions {
+            flex-shrink: 0; /* 禁止被压缩 */
+            display: flex;
+            gap: 6px;
+        }
+        .btn-header {
+            padding: 0;
+            width: 34px;
+            height: 34px;
+            justify-content: center;
+        }
+        .btn-header span { display: none; } /* 彻底隐藏文字 */
+        .btn-header i { margin: 0; font-size: 14px; }
+
+        /* --- 3. 聊天内容区 (核心滚动修复) --- */
+        .chat-container {
+            flex: 1; /* 自动填满 Header 和 Input 之间的空间 */
+            display: flex;
+            flex-direction: column;
+            width: 100%;
+
+            /* 滚动机制 */
+            overflow-y: auto;
+            overflow-x: hidden;
+            -webkit-overflow-scrolling: touch; /* 开启 iOS 原生回弹 */
+
+            /* 布局调整 */
+            padding: 16px 12px 100px 12px; /* 底部预留足够空间给输入框 */
+            min-height: 0; /* 核心 Flexbox 滚动修复补丁 */
+        }
+
+        /* 内容自适应 */
+        .msg-row { max-width: 100%; gap: 8px; }
+        .avatar { width: 30px; height: 30px; flex-shrink: 0; }
+
+        .bubble {
+            max-width: 85%; /* 限制气泡宽度 */
+            padding: 10px 12px;
+            font-size: 14px;
+
+            /* 强制换行，防止长文本撑开 */
+            word-wrap: break-word;
+            word-break: break-word;
+            overflow-wrap: break-word;
+        }
+
+        .markdown-body pre {
+            max-width: 100%; /* 限制代码块宽度 */
+            overflow-x: scroll; /* 代码块内部独立滚动 */
+            padding: 10px;
+        }
+
+        /* --- 4. 底部输入框 (固定定位) --- */
+        .input-wrapper {
+            position: absolute; /* 相对于 .main 定位 */
+            bottom: 0;
+            left: 0;
+            right: 0;
+            z-index: 50;
+            padding: 10px 10px calc(10px + env(safe-area-inset-bottom)) 10px;
+            background: linear-gradient(to top, var(--bg-body) 85%, transparent);
+            pointer-events: none; /* 点击穿透背景 */
+        }
+
+        .input-box {
+            pointer-events: auto; /* 恢复输入框点击 */
+            background: var(--bg-surface);
+            padding: 6px 6px 6px 10px;
+            border-radius: 24px;
+            box-shadow: 0 -2px 10px rgba(0,0,0,0.05);
+        }
+        .input-box textarea { padding: 10px 0; font-size: 15px; }
+        .btn-send { width: 38px; height: 38px; border-radius: 50%; }
+
+        /* --- 5. 侧边栏与遮罩 (Sidebar) --- */
+        :root { --sidebar-width: 85%; }
+
+        .sidebar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            height: 100%;
+            width: var(--sidebar-width);
+            z-index: 999; /* 确保在最顶层 */
+            background: var(--bg-surface);
+            transition: transform 0.3s ease;
+            transform: translateX(-100%);
+            box-shadow: none;
+        }
+
+        .sidebar.open {
+            transform: translateX(0);
+            /* 使用伪元素做遮罩，避免 box-shadow 性能问题和点击判定问题 */
+        }
+
+        /* 遮罩层实现 */
+        .sidebar.open::after {
+            content: '';
+            position: fixed;
+            top: 0; left: 100%; /* 从侧边栏右侧开始 */
+            width: 100vw; height: 100vh;
+            background: rgba(0,0,0,0.5);
+            z-index: -1; /* 在侧边栏内容之下 */
+        }
+
+        .mobile-sidebar-close {
+            display: flex;
+            background: rgba(0,0,0,0.05);
+            border-radius: 6px;
+            width: 32px; height: 32px;
+        }
+
+        /* --- 6. 其他修正 --- */
+        .drawer { width: 100%; right: -100%; z-index: 1000; }
+        .drawer.open { right: 0; }
+        .modal { width: 92%; max-height: 80vh; overflow-y: auto; }
+    }
+    
+/* =========================================
+   Mobile Selector Fix & Menu Button Restore
+   (手机端下拉框适配与菜单按钮修复)
+   ========================================= */
+
+/* =========================================
+   Mobile Header Layout Fix (修复手机端顶部错位)
+   请替换之前的 @media (max-width: 768px) 中对应的部分
+   或者直接添加到样式文件最底部
+   ========================================= */
+
+@media (max-width: 768px) {
+    
+    /* 1. 父容器修复：强制水平排列 */
+    /* 解决“按钮在最上面”的问题，让按钮和内容左右并排 */
+    .header-left {
+        display: flex !important;
+        flex-direction: row !important; /* 关键：水平方向 */
+        align-items: center !important; /* 垂直居中 */
+        flex: 1;
+        overflow: hidden; /* 防止溢出 */
+        gap: 8px; /* 按钮和内容之间的间距 */
+    }
+
+    /* 2. 菜单按钮：禁止压缩，确保显示 */
+    .mobile-menu-btn {
+        display: flex !important;
+        flex-shrink: 0; /* 无论多挤都不要压缩按钮 */
+        z-index: 10;
+        width: 32px; /* 固定宽度，防止忽大忽小 */
+        justify-content: center;
+    }
+
+    /* 3. 内容区域容器：内部垂直排列 */
+    /* 负责包裹“标题”和“那三个选择框” */
+    .chat-meta {
+        display: flex !important;
+        flex-direction: column !important; /* 关键：上下方向 */
+        justify-content: center;
+        flex: 1; /* 占满剩余宽度 */
+        min-width: 0; /* 允许内部元素缩小 */
+        gap: 2px; /* 标题和选择框稍微紧凑一点 */
+    }
+
+    /* 4. 标题样式微调 */
+    .chat-title {
+        font-size: 13px; /* 稍微改小一点，给下面腾位置 */
+        line-height: 1.2;
+        margin-bottom: 2px;
+    }
+
+    /* 5. 选择框容器：横向滚动 */
+    .selectors-row {
+        display: flex !important;
+        flex-direction: row !important; /* 强制水平 */
+        align-items: center;
+        width: 100%;
+        overflow-x: auto; /* 允许横向滑动 */
+        gap: 6px;
+        padding-bottom: 0; /* 移除多余留白 */
+        
+        /* 隐藏滚动条 */
+        scrollbar-width: none; 
+    }
+    .selectors-row::-webkit-scrollbar { display: none; }
+
+    /* 6. 单个下拉框样式 */
+    .model-selector {
+        font-size: 11px;
+        height: 20px; /* 调低高度，防止 Header 被撑太高 */
+        line-height: 20px;
+        padding: 0 4px;
+        background: rgba(0,0,0,0.05);
+        border-radius: 4px;
+        border: none;
+        flex-shrink: 0; /* 防止变瘪 */
+        max-width: 90px; /* 限制宽度 */
+    }
+}
+ /* =========================================
+       11. Summary Preset Modal (记忆压缩预设模态框)
+       ========================================= */
+
+    /* 列表容器美化 */
+    #summary-preset-list {
+        display: flex;
+        flex-direction: column;
+        gap: 10px; /* 选项之间的间距 */
+        padding: 4px; /* 给 focus 状态留出一点边缘空间 */
+        margin: 0 -4px; /* 抵消 padding，保持对齐 */
+    }
+
+    /* 自定义滚动条 (覆盖默认样式，保持一致性) */
+    #summary-preset-list::-webkit-scrollbar {
+        width: 4px;
+    }
+    #summary-preset-list::-webkit-scrollbar-thumb {
+        background: var(--border);
+        border-radius: 4px;
+    }
+
+    /* --- 预设选项卡片样式 --- */
+    /* 注意：你的 JS 生成列表时，请使用 label 包含 radio */
+    .preset-option {
+        display: flex;
+        align-items: flex-start; /* 顶部对齐，防止多行文字错位 */
+        gap: 12px;
+        padding: 12px 14px;
+        border: 1px solid var(--border);
+        border-radius: var(--radius-md);
+        background: var(--bg-body); /* 这里的背景比 modal 稍微深一点，形成层次 */
+        cursor: pointer;
+        transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+        position: relative;
+    }
+
+    /* 悬停效果 */
+    .preset-option:hover {
+        border-color: var(--primary);
+        background: var(--bg-surface);
+        transform: translateY(-1px);
+        box-shadow: var(--shadow-sm);
+    }
+
+    /* 选中状态 (利用 CSS :has 选择器，现代浏览器支持极佳) */
+    .preset-option:has(input[type="radio"]:checked) {
+        border-color: var(--primary);
+        background: var(--primary-light); /* 使用之前定义的淡色背景 */
+        box-shadow: 0 0 0 1px var(--primary); /* 加粗边框效果 */
+    }
+
+    /* 单选按钮样式微调 */
+    .preset-option input[type="radio"] {
+        margin-top: 3px; /* 微调对齐 */
+        accent-color: var(--primary); /* 浏览器原生主题色适配 */
+        flex-shrink: 0;
+    }
+
+    /* 选项文字内容区 */
+    .preset-content {
+        display: flex;
+        flex-direction: column;
+        gap: 2px;
+    }
+
+    .preset-title {
+        font-size: 14px;
+        font-weight: 600;
+        color: var(--text-main);
+    }
+
+    .preset-desc {
+        font-size: 12px;
+        color: var(--text-sec);
+        line-height: 1.4;
+    }
+
+    /* 选中状态下文字颜色变深，增强对比度 */
+    .preset-option:has(input[type="radio"]:checked) .preset-title {
+        color: var(--primary);
+    }
+
+    /* --- 加载状态动画 --- */
+    #summary-preset-loading {
+        font-size: 14px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        height: 100px; /* 占位高度 */
+        background: rgba(0,0,0,0.02);
+        border-radius: var(--radius-md);
+    }
+    /* 简单的旋转加载圈 */
+    #summary-preset-loading::before {
+        content: '';
+        width: 16px;
+        height: 16px;
+        border: 2px solid var(--primary-light);
+        border-top-color: var(--primary);
+        border-radius: 50%;
+        animation: spin 0.8s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* --- 错误状态 --- */
+    #summary-preset-error {
+        padding: 10px;
+        background: rgba(239, 68, 68, 0.1); /* 红色半透明 */
+        border-radius: var(--radius-md);
+        border: 1px solid rgba(239, 68, 68, 0.2);
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+    #summary-preset-error::before {
+        content: '\f071'; /* FontAwesome Warning Icon */
+        font-family: "Font Awesome 6 Free";
+        font-weight: 900;
+    }
+
+    /* --- 移动端适配 --- */
+    @media (max-width: 768px) {
+        #summary-preset-list {
+            max-height: 50vh !important; /* 移动端限制列表最大高度，防止模态框溢出屏幕 */
+        }
+        .preset-option {
+            padding: 14px; /* 移动端增加点击区域 */
+        }
+    }
+/* =========================================
+   12. Thinking Toggle (思考模式开关)
+   ========================================= */
+.thinking-toggle-wrapper {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 6px;
+    padding: 0 4px;
+}
+
+.thinking-toggle {
+    position: relative;
+    width: 36px;
+    height: 20px;
+    background: var(--border);
+    border-radius: 20px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    border: none;
+    padding: 0;
+}
+
+.thinking-toggle::after {
+    content: '';
+    position: absolute;
+    top: 2px;
+    left: 2px;
+    width: 16px;
+    height: 16px;
+    background: white;
+    border-radius: 50%;
+    transition: all 0.3s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+    box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+}
+
+.thinking-toggle.active {
+    background: linear-gradient(135deg, #8b5cf6 0%, #6366f1 100%);
+}
+
+.thinking-toggle.active::after {
+    left: 18px;
+}
+
+.thinking-toggle:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+}
+
+.thinking-toggle:disabled::after {
+    background: var(--text-muted);
+}
+
+.thinking-label {
+    font-size: 12px;
+    color: var(--text-sec);
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    user-select: none;
+}
+
+.thinking-label i {
+    font-size: 14px;
+    color: #8b5cf6;
+}
+
+.thinking-label.disabled {
+    opacity: 0.5;
+}
+
+/* =========================================
+   13. Reasoning Block (思维展示区域)
+   ========================================= */
+.reasoning-block {
+    margin-bottom: 12px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    overflow: hidden;
+    background: var(--bg-surface-2);
+}
+
+.reasoning-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 14px;
+    background: linear-gradient(135deg, rgba(139, 92, 246, 0.1) 0%, rgba(99, 102, 241, 0.1) 100%);
+    cursor: pointer;
+    user-select: none;
+    transition: background 0.2s;
+}
+
+.reasoning-header:hover {
+    background: linear-gradient(135deg, rgba(139, 92, 246, 0.15) 0%, rgba(99, 102, 241, 0.15) 100%);
+}
+
+.reasoning-header-left {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 13px;
+    font-weight: 600;
+    color: #8b5cf6;
+}
+
+.reasoning-header-left i {
+    font-size: 14px;
+}
+
+.reasoning-toggle-icon {
+    color: var(--text-muted);
+    font-size: 12px;
+    transition: transform 0.3s ease;
+}
+
+.reasoning-block.collapsed .reasoning-toggle-icon {
+    transform: rotate(-90deg);
+}
+
+.reasoning-content {
+    padding: 12px 14px;
+    font-size: 13px;
+    line-height: 1.6;
+    color: var(--text-sec);
+    border-top: 1px solid var(--border);
+    max-height: 300px;
+    overflow-y: auto;
+    white-space: pre-wrap;
+    word-break: break-word;
+    font-family: 'JetBrains Mono', monospace;
+    background: var(--bg-body);
+}
+
+.reasoning-block.collapsed .reasoning-content {
+    display: none;
+}
+
+/* 思维内容加载中动画 */
+.reasoning-loading {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 12px 14px;
+    color: var(--text-muted);
+    font-size: 13px;
+}
+
+.reasoning-loading i {
+    animation: spin 1s linear infinite;
+}
+
+/* =========================================
+   14. Regenerate Button (重新生成按钮)
+   ========================================= */
+.action-btn.regenerate {
+    background: rgba(139, 92, 246, 0.1);
+    color: #8b5cf6;
+}
+
+.action-btn.regenerate:hover {
+    background: rgba(139, 92, 246, 0.2);
+    color: #7c3aed;
+}
+
+.msg-row.user .action-btn.regenerate {
+    background: rgba(255, 255, 255, 0.15);
+    color: rgba(255, 255, 255, 0.9);
+}
+
+.msg-row.user .action-btn.regenerate:hover {
+    background: rgba(255, 255, 255, 0.25);
+}
+
+/* 重新生成时的加载状态 */
+.bubble.regenerating {
+    opacity: 0.7;
+    pointer-events: none;
+}
+
+.bubble.regenerating::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(90deg, transparent, rgba(139, 92, 246, 0.1), transparent);
+    animation: shimmer 1.5s infinite;
+}
+
+@keyframes shimmer {
+    0% { transform: translateX(-100%); }
+    100% { transform: translateX(100%); }
+}
+
+/* 深色模式适配 */
+[data-theme="dark"] .reasoning-block {
+    background: rgba(139, 92, 246, 0.05);
+}
+
+[data-theme="dark"] .reasoning-content {
+    background: rgba(0, 0, 0, 0.2);
+}
+
+[data-theme="dark"] .thinking-toggle.active {
+    background: linear-gradient(135deg, #a78bfa 0%, #818cf8 100%);
+}
+
+/* 移动端适配 */
+@media (max-width: 768px) {
+    .thinking-toggle-wrapper {
+        padding: 0;
+    }
+    
+    .thinking-label span {
+        display: none;
+    }
+    
+    .reasoning-content {
+        max-height: 200px;
+        font-size: 12px;
+    }
+}
+
+/* ===== AI Discuss Modal ===== */
+.ai-discuss-controls { margin-top: 10px; }
+.ai-discuss-row-lite { display:flex; gap:12px; align-items:center; flex-wrap:wrap; }
+.ai-discuss-field { flex: 1 1 220px; min-width: 220px; }
+.ai-discuss-label { font-size: 12px; opacity: .8; margin-bottom: 6px; }
+
+.ai-discuss-check {
+  display:flex; align-items:center; gap:10px;
+  padding: 10px 12px;
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  background: rgba(0,0,0,.03);
+  flex: 1 1 280px;
+  min-width: 240px;
+}
+html[data-theme="dark"] .ai-discuss-check { background: rgba(255,255,255,.06); }
+
+.ai-discuss-list { display:flex; flex-direction:column; gap:10px; margin-top: 12px; }
+
+.ai-discuss-item {
+  display:flex;
+  gap:10px;
+  align-items:center;
+  padding: 10px;
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  background: rgba(0,0,0,.03);
+}
+html[data-theme="dark"] .ai-discuss-item { background: rgba(255,255,255,.06); }
+
+.ai-discuss-item .model-selector{
+  flex: 1 1 160px;
+  min-width: 140px;
+  max-width: none; /* 覆盖你 header 的 max-width */
+  height: 36px;
+  border-radius: 12px;
+}
+
+.ai-discuss-btn-mini{
+  width: 36px; height: 36px;
+  border-radius: 12px;
+  border: 1px solid var(--border);
+  background: transparent;
+  display:flex; align-items:center; justify-content:center;
+  cursor:pointer;
+  transition: 0.15s ease;
+}
+.ai-discuss-btn-mini:hover{ transform: translateY(-1px); }
+.ai-discuss-btn-mini.danger:hover{ border-color: var(--danger); color: var(--danger); }
+
+/* Mobile */
+@media (max-width: 768px){
+  .ai-discuss-item{ flex-wrap:wrap; }
+  .ai-discuss-item .model-selector{ flex: 1 1 100%; min-width: 0; }
+  .ai-discuss-btn-mini{ margin-left: auto; }
+}
+/* 【新增】数学公式样式微调 */
+        .katex { font-size: 1.1em; }
+        .katex-display { overflow-x: auto; overflow-y: hidden; padding: 4px 0; }
+        
+        /* 【优化】代码块样式，防止黑色背景过于突兀 */
+        .markdown-body pre code.hljs {
+            padding: 0;
+            background: transparent; /* 让背景由 pre 控制 */
+        }
+/* =========================================
+       修复代码块高亮与可见性 Bug
+       ========================================= */
+    
+    /* 1. 强制覆盖 Marked 生成的代码块样式 */
+    .markdown-body pre {
+        background-color: #282c34 !important; /* One Dark 背景色 */
+        color: #abb2bf !important;            /* One Dark 基础字色(浅灰) - 关键修复！ */
+        border-radius: var(--radius-md);
+        padding: 16px;
+        overflow-x: auto;
+        border: 1px solid rgba(255,255,255,0.1); /* 微弱边框提升对比度 */
+    }
+
+    /* 2. 确保代码块内的文字颜色不被全局样式覆盖 */
+    .markdown-body pre code {
+        background-color: transparent !important;
+        color: inherit !important; /* 继承 pre 的浅灰色 */
+        font-family: 'JetBrains Mono', monospace;
+        font-size: 14px;
+    }
+
+    /* 3. 针对未识别语言的纯文本块，手动修正颜色 */
+    .hljs {
+        background: transparent !important;
+        color: #abb2bf !important;
+    }
+    
+/* --- 按钮通用样式 --- */
+    .code-action-btn {
+        position: absolute;
+        top: 8px;
+        z-index: 10;
+        background: rgba(255, 255, 255, 0.1);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        color: #a0a0a0;
+        font-size: 12px;
+        padding: 4px 10px !important;
+        height: 28px;
+        border-radius: 6px;
+        cursor: pointer;
+        transition: all 0.2s;
+        /* 关键修复：手机端或无鼠标环境默认显示，桌面端才用 hover */
+        opacity: 1; 
+    }
+    
+    /* 只有在支持 hover 的设备（电脑）上，才默认隐藏，鼠标移上去显示 */
+    @media (hover: hover) {
+        .code-action-btn { opacity: 0; }
+        .markdown-body pre:hover .code-action-btn,
+        .html-preview-wrapper:hover .code-action-btn { opacity: 1; }
+    }
+
+    .code-action-btn:hover { background: rgba(255, 255, 255, 0.2); color: white; }
+
+    /* 复制按钮 (代码模式) */
+    .code-copy-btn { right: 8px; }
+    
+    /* 预览按钮 (代码模式) */
+    .code-preview-btn { right: 80px; }
+
+    /* --- 预览容器系统 --- */
+    .html-preview-wrapper {
+        position: relative;
+        margin: 16px 0;
+        border: 1px solid var(--border);
+        border-radius: var(--radius-md);
+        background: white;
+        overflow: hidden;
+        display: none; /* 默认隐藏，激活时显示 */
+    }
+
+    /* 预览模式下的顶部工具栏 */
+    .preview-toolbar {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 8px 12px;
+        background: #f8fafc; /* 浅灰背景 */
+        border-bottom: 1px solid var(--border);
+        font-size: 12px;
+        color: var(--text-sec);
+    }
+
+    /* 预览模式下的“切换回代码”按钮 */
+    .btn-back-code {
+        background: white;
+        border: 1px solid var(--border);
+        color: var(--text-main);
+        padding: 2px 8px;
+        border-radius: 4px;
+        cursor: pointer;
+        font-size: 12px;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+    }
+
+    /* 实际的内容容器 */
+    .preview-sandbox {
+        padding: 0;
+        min-height: 100px;
+        background: white;
+    }
+    /* 新增：角色名输入框样式 */
+.ai-discuss-item .role-input {
+    flex: 1 1 100px; /* 弹性宽度 */
+    min-width: 80px;
+    height: 36px;
+    padding: 0 10px;
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    background: var(--bg-surface);
+    color: var(--text-main);
+    font-size: 13px;
+    outline: none;
+    transition: border-color 0.2s;
+}
+.ai-discuss-item .role-input:focus {
+    border-color: var(--primary);
+}
+
+/* 移动端适配 */
+@media (max-width: 768px) {
+    .ai-discuss-item .role-input {
+        flex: 1 1 100%; /* 手机上占满一行 */
+        order: -1;      /* 把它放到最上面，方便先起名再选模型 */
+        margin-bottom: 6px;
+    }
+}
+ /* 优化代码块样式，确保高亮颜色可见 */
+.markdown-body pre {
+    background-color: #282c34 !important; /* One Dark 背景 */
+    color: #abb2bf !important;            /* 默认文本色 */
+    padding: 16px;
+    border-radius: var(--radius-md);
+    overflow-x: auto;
+    font-family: 'JetBrains Mono', monospace;
+    line-height: 1.5;
+}
+
+/* 强制 hljs 背景透明，由 pre 接管背景 */
+.markdown-body pre code.hljs {
+    background: transparent !important;
+    padding: 0;
+}
+    </style>
+</head>
+<body>
+
+<div class="toast-container" id="toast-container"></div>
+
+<div class="sidebar" id="sidebar">
+   <div class="brand">
+        <div style="display:flex; align-items:center; gap:12px;">
+            <i class="fa-solid fa-brain" style="color: var(--primary);"></i>
+            <span>Great Mind</span>
+        </div>
+        <button class="btn-icon mobile-sidebar-close" onclick="toggleSidebar()">
+            <i class="fa-solid fa-xmark"></i>
+        </button>
+    </div>
+
+    <div class="sidebar-controls">
+        <button class="btn-new-chat" onclick="openModal('modal-new-chat')">
+            <i class="fa-solid fa-plus"></i>
+            <span>新建对话</span>
+        </button>
+    </div>
+
+    <div class="chat-list" id="chat-list">
+        </div>
+
+    <div class="sidebar-footer">
+        <button class="btn-icon" onclick="toggleTheme()" title="切换日/夜模式">
+            <i class="fa-solid fa-circle-half-stroke"></i>
+        </button>
+        <div style="font-size: 10px; color: var(--text-muted); margin-left: auto;">
+            v2.0 Memory Engine
+        </div>
+    </div>
+</div>
+
+<div class="main">
+    <header class="header glass">
+        <div class="header-left">
+            <button class="btn-icon desktop-menu-btn" onclick="toggleSidebarDesktop()" title="折叠/展开侧边栏">
+                <i class="fa-solid fa-left-right"></i>
+            </button>
+            <button class="btn-icon mobile-menu-btn" onclick="toggleSidebar()">
+                <i class="fa-solid fa-bars"></i>
+            </button>
+
+            <div class="chat-meta">
+                <div class="chat-title" id="current-chat-title">未选择对话</div>
+
+                <div class="selectors-row">
+                    <select id="provider-select" class="model-selector" title="API 提供商">
+                        <option value="google">Google</option>
+                        <option value="openai">OpenAI</option>
+                    </select>
+
+                    <select id="api-key-index-select" class="model-selector" title="API Key 选择">
+                        <option value="">Key: Auto</option>
+                    </select>
+
+                    <select id="model-select" class="model-selector" title="模型选择">
+                        <option>Loading models...</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+
+        <div class="header-actions">
+            <!-- header-actions 内，把这个按钮放在“浓缩记忆”前面 -->
+            <button class="btn-header" onclick="openAiDiscussModal()" title="多模型迭代（只追加 AI 消息）">
+              <i class="fa-solid fa-people-group"></i>
+              <span>智能迭代</span>
+            </button>
+
+            <button class="btn-header" onclick="requestSummary()" title="压缩当前对话上下文">
+                <i class="fa-solid fa-compress-arrows-alt"></i>
+                <span>浓缩记忆</span>
+            </button>
+            <button class="btn-header" onclick="togglePermDrawer()" title="查看核心设定">
+                <i class="fa-solid fa-book-bookmark" style="color: var(--accent-perm);"></i>
+                <span>永久记忆</span>
+            </button>
+        </div>
+    </header>
+
+    <div class="chat-container" id="chat-container">
+        <div class="empty-state">
+            <i class="fa-solid fa-comments" style="font-size: 64px; margin-bottom: 20px; color: var(--primary-light);"></i>
+            <h3>开启新的思维旅程</h3>
+            <p style="max-width: 300px; margin: 0 auto;">从左侧选择一个历史对话，或者点击“新建对话”开始。</p>
+        </div>
+    </div>
+
+<!-- 找到 input-wrapper div，替换为以下内容 -->
+
+    <div class="input-wrapper">
+        <div id="file-preview-container" class="preview-area" style="display:none;"></div>
+
+        <div class="input-box">
+            <input type="file" id="file-input" multiple accept="image/*,application/pdf,text/plain" style="display: none;" onchange="handleFileSelect(this)">
+
+            <button class="btn-attach" onclick="document.getElementById('file-input').click()" title="上传图片/文件">
+                <i class="fa-solid fa-paperclip"></i>
+            </button>
+
+            <div style="flex: 1; display: flex; flex-direction: column;">
+                <!-- 思考模式开关 -->
+                <div class="thinking-toggle-wrapper" id="thinking-toggle-wrapper">
+                    <button class="thinking-toggle" id="thinking-toggle" onclick="toggleThinkingMode()" disabled title="当前模型不支持思考模式">
+                    </button>
+                    <label class="thinking-label disabled" id="thinking-label">
+                        <i class="fa-solid fa-brain"></i>
+                        <span>深度思考</span>
+                    </label>
+                </div>
+                
+                <textarea id="user-input" rows="1" placeholder="输入消息... (Shift+Enter 换行)" oninput="autoResize(this)"></textarea>
+            </div>
+
+            <button id="send-btn" class="btn-send" onclick="sendMessage()">
+                <i class="fa-solid fa-paper-plane"></i>
+            </button>
+        </div>
+    </div>
+</div>
+
+<div class="drawer" id="perm-drawer">
+    <div class="drawer-header">
+        <div style="display:flex; align-items:center; gap:10px;">
+            <i class="fa-solid fa-star" style="color: var(--accent-perm);"></i>
+            <span>核心记忆库</span>
+
+            <button class="btn-icon" onclick="openAddPermModal()" title="新建记忆"
+                    style="width:24px; height:24px; background:var(--primary); color:white; border-radius:4px; margin-left:8px;">
+                <i class="fa-solid fa-plus" style="font-size:10px;"></i>
+            </button>
+        </div>
+        <button class="btn-icon" onclick="togglePermDrawer()">
+            <i class="fa-solid fa-xmark"></i>
+        </button>
+    </div>
+
+    <div class="drawer-body" id="perm-list-content">
+        </div>
+</div>
+<div class="modal-overlay" id="modal-ai-discuss">
+  <div class="modal" style="max-width: 680px;">
+    <div class="modal-title">🤖 智能迭代</div>
+<div class="modal-desc">
+  你可以添加 N 个模型。每一轮 = 列表里所有模型各迭代一次。
+</div>
+
+<div style="margin-top: 15px; margin-bottom: 5px;">
+    <div class="ai-discuss-label" style="font-weight:600; margin-bottom:6px;">
+        🚀 迭代目标 / 初始提示词 (Seed Prompt)
+    </div>
+    <textarea id="ai-discuss-seed" class="modal-input"
+              style="height: 70px; resize: vertical; margin-bottom: 0;"
+              placeholder="可选：在此输入任务背景或具体指令，这将作为 System Message 或第一条指令发送给所有模型..."></textarea>
+</div>
+<div class="ai-discuss-controls">
+      <div class="ai-discuss-row-lite">
+        <div class="ai-discuss-field">
+          <div class="ai-discuss-label">迭代轮数</div>
+          <input id="ai-discuss-rounds" class="modal-input" type="number" min="1" max="50" value="1"
+                 style="height: 40px; padding: 0 12px;" />
+        </div>
+
+        <label class="ai-discuss-check">
+          <input type="checkbox" id="ai-discuss-thinking">
+          <span>尝试启用深度思考（若模型支持）</span>
+        </label>
+      </div>
+    </div>
+
+    <div class="ai-discuss-list" id="ai-discuss-list"></div>
+
+    <button class="btn btn-ghost" onclick="addAiDiscussRow()" style="width:100%; margin-top: 10px;">
+      <i class="fa-solid fa-plus"></i> 添加模型
+    </button>
+
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('modal-ai-discuss')">取消</button>
+      <button class="btn btn-primary" id="btn-ai-discuss-start" onclick="startAiDiscuss()">开始迭代</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="modal-add-perm">
+    <div class="modal">
+        <div class="modal-title">新增永久记忆</div>
+        <div class="modal-desc">直接向核心库写入一条不被遗忘的设定（如：你的名字、特定规则、世界观等）。</div>
+        <textarea id="new-perm-content" class="modal-input"
+                  style="height:120px; resize:none; font-family:'JetBrains Mono';"
+                  placeholder="例如：用户是一名高级 Python 工程师，偏好简洁的代码风格..."></textarea>
+        <div class="modal-footer">
+            <button class="btn btn-ghost" onclick="closeModal('modal-add-perm')">取消</button>
+            <button class="btn btn-primary" onclick="confirmAddPerm()">添加</button>
+        </div>
+    </div>
+</div>
+
+<div class="modal-overlay" id="modal-edit-msg">
+    <div class="modal">
+        <div class="modal-title">编辑消息内容</div>
+        <div class="modal-desc">直接修改历史记录中的文本内容（这将影响 AI 的上下文理解）。</div>
+        <textarea id="edit-msg-input" class="modal-input"
+                  style="height:300px; resize:none; font-family:'JetBrains Mono'; line-height:1.5;"></textarea>
+        <div class="modal-footer">
+            <button class="btn btn-ghost" onclick="closeModal('modal-edit-msg')">取消</button>
+            <button class="btn btn-primary" onclick="confirmEditMessage()">保存修改</button>
+        </div>
+    </div>
+</div>
+
+<div class="modal-overlay" id="modal-new-chat">
+    <div class="modal">
+        <div class="modal-title">新建对话</div>
+        <div class="modal-desc">为新的记忆会话起一个独特的名字。</div>
+        <input type="text" class="modal-input" id="new-chat-name" placeholder="例如: coding-project-alpha" autocomplete="off">
+        <div class="modal-footer">
+            <button class="btn btn-ghost" onclick="closeModal('modal-new-chat')">取消</button>
+            <button class="btn btn-primary" onclick="confirmNewChat()">创建</button>
+        </div>
+    </div>
+</div>
+
+<div class="modal-overlay" id="modal-rename">
+    <div class="modal">
+        <div class="modal-title">重命名对话</div>
+        <div class="modal-desc">请输入新的对话名称：</div>
+        <input type="text" class="modal-input" id="rename-input" autocomplete="off">
+        <div class="modal-footer">
+            <button class="btn btn-ghost" onclick="closeModal('modal-rename')">取消</button>
+            <button class="btn btn-primary" onclick="confirmRename()">保存</button>
+        </div>
+    </div>
+</div>
+
+<div class="modal-overlay" id="modal-delete-confirm">
+    <div class="modal">
+        <div class="modal-title" style="color: var(--danger)">⚠️ 删除对话</div>
+        <div class="modal-desc">确定要彻底删除这个对话吗？此操作包含的所有记忆将无法找回。</div>
+        <div class="modal-footer">
+            <button class="btn btn-ghost" onclick="closeModal('modal-delete-confirm')">取消</button>
+            <button class="btn btn-danger" id="btn-confirm-delete">彻底删除</button>
+        </div>
+    </div>
+</div>
+
+<div class="modal-overlay" id="modal-summary">
+    <div class="modal" style="max-width: 600px;">
+        <div class="modal-title">✨ 确认浓缩记忆</div>
+        <div class="modal-desc">AI 生成了以下总结，这将替换掉当前的临时记忆以节省 Token。请编辑确认：</div>
+        <textarea id="summary-edit" class="modal-input" style="height: 200px; resize: none; font-family: 'JetBrains Mono';"></textarea>
+        <div class="modal-footer">
+            <button class="btn btn-ghost" onclick="closeModal('modal-summary')">放弃</button>
+            <button class="btn btn-primary" onclick="saveSummary()">确认并替换</button>
+        </div>
+    </div>
+</div>
+<!-- 记忆压缩：任务方向选择 -->
+<div class="modal-overlay" id="modal-summary-preset">
+    <div class="modal" style="max-width: 500px;">
+        <div class="modal-title">✨ 选择记忆压缩方向</div>
+        <div class="modal-desc">请选择一个预设的任务目标，AI 将根据该方向对历史记忆进行浓缩提取。</div>
+
+        <div class="modal-body" style="margin-top: 15px;">
+            <div id="summary-preset-loading" style="display:none; text-align: center; padding: 20px; color: var(--primary);">
+                正在加载预设列表...
+            </div>
+
+            <div id="summary-preset-error" style="display:none; color: var(--danger); font-size: 14px; margin-bottom: 10px;"></div>
+
+            <div id="summary-preset-list" style="max-height: 300px; overflow-y: auto;">
+                </div>
+
+            <div style="margin-top: 15px; opacity: 0.6; font-size: 12px; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 10px;">
+                💡 提示词模板保存在后端，仅显示任务名称。
+            </div>
+        </div>
+
+        <div class="modal-footer">
+            <button class="btn btn-ghost" onclick="closeModal('modal-summary-preset')">取消</button>
+            <button id="btn-summary-preset-confirm" class="btn btn-primary">开始压缩</button>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/marked/4.3.0/marked.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.7.0/highlight.min.js"></script>
+<!-- 【新增】KaTeX 和 DOMPurify -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.8/katex.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.8/contrib/auto-render.min.js"></script>
+<script>
+    // --- 全局配置 ---
+// --- 修改 index.html 中的配置代码 ---
+// ================================
+// ✅ 安全工具：HTML 转义（防 XSS + 防止页面崩溃）
+// ================================
+function escapeHtml(v) {
+    if (v === null || v === undefined) return '';
+    return String(v)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+}
+
+// ================================
+// ✅ Markdown 渲染引擎配置 (最终增强版)
+// ================================
+
+// 1. LaTeX 预处理：保护公式，防止被 Markdown 引擎破坏
+function protectLatexDelimiters(text) {
+    if (!text) return '';
+
+    const stash = [];
+    const put = (m) => {
+        // 使用随机 token 避免碰撞
+        const key = `@@CODE_${stash.length}_${Math.random().toString(36).slice(2)}@@`;
+        stash.push(m);
+        return key;
+    };
+
+    // 1) 先把代码块/行内代码“摘出来”，防止公式处理误伤代码
+    let t = String(text)
+        .replace(/```[\s\S]*?```/g, (m) => put(m))
+        .replace(/~~~[\s\S]*?~~~/g, (m) => put(m))
+        .replace(/`[^`]*`/g, (m) => put(m));
+
+    // 2) 处理 LaTeX 分隔符 (增强版)
+    t = t
+        // A. 标准 LaTeX \[ ... \] 和 \( ... \)
+        .replace(/\\\[/g, '⟦')
+        .replace(/\\\]/g, '⟧')
+        .replace(/\\\(/g, '⟮')
+        .replace(/\\\)/g, '⟯')
+
+        // B. 【关键修复】处理“裸方括号” [ ... ] (支持独占一行，或位于列表项 * [ ... ] 之后)
+        // 逻辑：如果一行(或列表后)以 [ 结尾，则视为 Display Math 开始
+        .replace(/(^[\t ]*(?:[*+-]|\d+\.)?[\t ]*)\[[\t ]*$/gm, '$1⟦')
+        // 逻辑：如果一行以 ] 开头(或结尾)，则视为 Display Math 结束
+        .replace(/^[\t ]*\][\t ]*$/gm, '⟧')
+
+        // C. 【关键修复】处理“裸括号” ( ... )
+        // 难点解决：使用回调函数 + 正则递归模拟，支持一层嵌套括号，例如 \big( x \big)
+        // 匹配规则：以 ( 开头，中间包含 "非括号字符" 或 "一对匹配的括号"，以 ) 结尾
+        .replace(/\(([^()\n]*(?:\([^()\n]*\)[^()\n]*)*)\)/g, (match, content) => {
+            // 只有当括号内容里包含 反斜杠\ 或 等号= 时，才认为是公式
+            // 避免把普通的 (see section 1) 误判为公式
+            if (/\\|=/.test(content)) {
+                return '⟮' + content + '⟯';
+            }
+            return match;
+        });
+
+    // 3) 还原代码块
+    for (let i = 0; i < stash.length; i++) {
+        // 这里的 replace 使用回调函数防止 token 内的特殊字符($)导致替换错误
+        t = t.replace(stash[i] ? new RegExp(stash[i].replace(/[-/\\^$*+?.()|[\]{}]/g, '\\$&'), 'g') : '', () => stash[i]);
+    }
+
+    // 二次保险：通过 token key 再次还原（防止上面的正则没匹配到）
+    t = t.replace(/@@CODE_\d+_[a-z0-9]+@@/g, (match) => {
+        const idx = parseInt(match.split('_')[1]);
+        return stash[idx];
+    });
+
+    return t;
+}
+
+// 2. 自定义 Marked 扩展：LaTeX 解析器
+const latexExtension = {
+    name: 'latex',
+    level: 'inline',
+    start(src) {
+        return src.match(/\$|⟮|⟦|\\begin\{/)?.index;
+    },
+    tokenizer(src) {
+        // 1) Block: $$...$$
+        let m = /^\$\$([\s\S]+?)\$\$/.exec(src);
+        if (m) return { type: 'latex', raw: m[0], text: m[1].trim(), displayMode: true };
+
+        // 2) Block: ⟦...⟧ (涵盖了 \[...\] 和 裸 [ ... ])
+        m = /^⟦([\s\S]+?)⟧/.exec(src);
+        if (m) return { type: 'latex', raw: m[0], text: m[1].trim(), displayMode: true };
+
+        // 3) Inline: $...$
+        m = /^\$((?:\\.|[^$\n])+?)\$/.exec(src);
+        if (m) return { type: 'latex', raw: m[0], text: m[1].trim(), displayMode: false };
+
+        // 4) Inline: ⟮...⟯ (涵盖了 \(...\) 和裸 (...))
+        // 使用 ^\s* 允许前面有微小空格，提高列表兼容性
+        m = /^\s*⟮([^\n]+?)⟯/.exec(src);
+        if (m) return { type: 'latex', raw: m[0], text: m[1].trim(), displayMode: false };
+
+        // 5) Environment: \begin{...}...\end{...}
+        m = /^\\begin\{([a-zA-Z]+\*?)\}([\s\S]+?)\\end\{\1\}/.exec(src);
+        if (m) return { type: 'latex', raw: m[0], text: m[0], displayMode: true };
+    },
+    renderer(token) {
+        try {
+            return katex.renderToString(token.text, {
+                displayMode: token.displayMode,
+                throwOnError: false,
+                output: 'html',
+                trust: true
+            });
+        } catch (err) {
+            return token.raw;
+        }
+    }
+};
+
+marked.use({ extensions: [latexExtension] });
+
+// 3. 配置高亮与基础选项
+marked.setOptions({
+    highlight: function(code, lang) {
+        if (typeof hljs === 'undefined') return code;
+        try {
+            if (lang && hljs.getLanguage(lang)) {
+                return hljs.highlight(code, { language: lang }).value;
+            }
+            return hljs.highlightAuto(code).value;
+        } catch (e) {
+            return code;
+        }
+    },
+    langPrefix: 'hljs language-',
+    breaks: true
+});
+
+function safeRenderMarkdown(text) {
+    if (!text) return '';
+    return marked.parse(protectLatexDelimiters(text));
+}
+
+let currentChatId = '';
+let chatToDeleteId = null;
+let chatToRenameId = null;
+let currentAttachments = [];
+
+// ================================
+// Provider / Key 动态逻辑
+// ================================
+function getSelectedApiType() {
+    const el = document.getElementById('provider-select');
+    const v = el ? el.value : null;
+    return v || localStorage.getItem('selected_api_type') || 'google';
+}
+
+// 每个 provider 单独记住 key 选择
+function getApiKeyStorageKey(apiType) {
+    return `selected_api_key_index__${apiType}`;
+}
+
+function getSelectedApiKeyIndex() {
+    const el = document.getElementById('api-key-index-select');
+    const v = el ? String(el.value || '').trim() : '';
+    if (!v) return null;
+    const n = Number(v);
+    return Number.isFinite(n) ? n : null;
+}
+
+function getModelStorageKey(apiType, apiKeyIndex) {
+    const keyPart = (apiKeyIndex === null || apiKeyIndex === undefined) ? 'default' : String(apiKeyIndex);
+    return `selected_model__${apiType}__${keyPart}`;
+}
+
+function initApiKeyIndexSelect() {
+    const sel = document.getElementById('api-key-index-select');
+    if (!sel) return;
+
+    sel.onchange = async () => {
+        const apiType = getSelectedApiType();
+        // 新：按 provider 存
+        localStorage.setItem(getApiKeyStorageKey(apiType), sel.value);
+        // 旧：兼容你原本逻辑（如果别处还在用）
+        localStorage.setItem('selected_api_key_index', sel.value);
+
+        await loadModels();
+    };
+}
+
+// 从后端拉取 keys（只含 index+name），动态填充下拉框
+async function loadApiKeys() {
+    const apiType = getSelectedApiType();
+    const sel = document.getElementById('api-key-index-select');
+    if (!sel) return;
+
+    // 先放回 Auto
+    sel.innerHTML = `<option value="">Key: Auto</option>`;
+
+    try {
+        const res = await fetch(`/api/get_api_keys?api_type=${encodeURIComponent(apiType)}`);
+        const data = await res.json();
+        const keys = Array.isArray(data.keys) ? data.keys : [];
+
+        keys.forEach(k => {
+            const idx = k.index;
+            const name = k.name || k.display || `Key #${idx}`;
+            const opt = document.createElement('option');
+            opt.value = String(idx);
+            opt.innerText = name; // ✅ 这里就是你要显示的“自定义名称”
+            sel.appendChild(opt);
+        });
+
+    } catch (e) {
+        console.warn('[keys] load failed:', e);
+        // 保底：不影响使用（只有 Auto）
+    }
+
+    // 恢复上次选择（优先 per-provider）
+    const saved = localStorage.getItem(getApiKeyStorageKey(apiType))
+               ?? localStorage.getItem('selected_api_key_index')
+               ?? '';
+
+    if (saved && Array.from(sel.options).some(o => o.value === String(saved))) {
+        sel.value = String(saved);
+    } else {
+        sel.value = '';
+    }
+}
+
+async function loadProviders() {
+    const select = document.getElementById('provider-select');
+    if (!select) return;
+
+    try {
+        const res = await fetch('/api/get_providers');
+        const data = await res.json();
+
+        const providers = Array.isArray(data.providers) ? data.providers : [];
+        if (providers.length === 0) throw new Error('providers empty');
+
+        select.innerHTML = '';
+        providers.forEach(p => {
+            const opt = document.createElement('option');
+            opt.value = p.id;
+            opt.innerText = p.display || p.id;
+            select.appendChild(opt);
+        });
+
+        const savedType = localStorage.getItem('selected_api_type') || 'google';
+        if (Array.from(select.options).some(o => o.value === savedType)) {
+            select.value = savedType;
+        } else {
+            select.value = select.options[0]?.value || 'google';
+        }
+
+    } catch (e) {
+        console.warn('[providers] load failed, using fallback list:', e);
+        select.innerHTML = `
+            <option value="google">Google (fallback)</option>
+            <option value="openai">OpenAI (fallback)</option>
+            <option value="siliconflow">SiliconFlow (fallback)</option>
+        `;
+        const savedType = localStorage.getItem('selected_api_type') || 'google';
+        select.value = Array.from(select.options).some(o => o.value === savedType) ? savedType : 'google';
+    }
+
+    select.onchange = async () => {
+        localStorage.setItem('selected_api_type', select.value);
+
+        // ✅ 切换 provider：先刷新 key 列表（数量/名称都变），再刷新模型
+        await loadApiKeys();
+        await loadModels();
+    };
+}
+
+// --- 初始化 ---
+// 替换原有的 window.onload 函数
+
+window.onload = async () => {
+    loadChatList();
+
+    initApiKeyIndexSelect();
+
+    // 顺序：先 providers -> 再 keys -> 再 models -> 再检查能力
+    await loadProviders();
+    await loadApiKeys();
+    await loadModels();
+    
+    // 新增：检查模型能力
+    await checkModelCapabilities();
+
+    const savedTheme = localStorage.getItem('theme') || 'light';
+    document.documentElement.setAttribute('data-theme', savedTheme);
+
+    const input = document.getElementById('user-input');
+    input.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter' && !e.shiftKey) {
+            e.preventDefault();
+            sendMessage();
+        }
+    });
+    
+    // 监听模型选择变化
+    const modelSelect = document.getElementById('model-select');
+    if (modelSelect) {
+        const originalOnChange = modelSelect.onchange;
+        modelSelect.onchange = async () => {
+            if (originalOnChange) originalOnChange();
+            await checkModelCapabilities();
+        };
+    }
+};
+// =========================================
+// 思考模式相关
+// =========================================
+let thinkingModeEnabled = false;
+let currentModelSupportsThinking = false;
+
+// 切换思考模式
+function toggleThinkingMode() {
+    if (!currentModelSupportsThinking) return;
+    
+    thinkingModeEnabled = !thinkingModeEnabled;
+    updateThinkingToggleUI();
+    
+    // 保存状态
+    localStorage.setItem('thinking_mode_enabled', thinkingModeEnabled ? '1' : '0');
+}
+
+// 更新思考模式 UI
+function updateThinkingToggleUI() {
+    const toggle = document.getElementById('thinking-toggle');
+    const label = document.getElementById('thinking-label');
+    
+    if (!toggle || !label) return;
+    
+    if (currentModelSupportsThinking) {
+        toggle.disabled = false;
+        toggle.title = thinkingModeEnabled ? '点击关闭深度思考' : '点击开启深度思考';
+        label.classList.remove('disabled');
+        
+        if (thinkingModeEnabled) {
+            toggle.classList.add('active');
+        } else {
+            toggle.classList.remove('active');
+        }
+    } else {
+        toggle.disabled = true;
+        toggle.classList.remove('active');
+        toggle.title = '当前模型不支持思考模式';
+        label.classList.add('disabled');
+        thinkingModeEnabled = false;
+    }
+}
+
+// 检查模型能力
+async function checkModelCapabilities() {
+    const apiType = getSelectedApiType();
+    const modelSelect = document.getElementById('model-select');
+    const model = modelSelect ? modelSelect.value : '';
+    
+    if (!model) {
+        currentModelSupportsThinking = false;
+        updateThinkingToggleUI();
+        return;
+    }
+    
+    try {
+        const res = await fetch(`/api/get_model_capabilities?api_type=${encodeURIComponent(apiType)}&model=${encodeURIComponent(model)}`);
+        const data = await res.json();
+        
+        currentModelSupportsThinking = data.supports_thinking === true;
+        
+        // 恢复之前的选择（如果模型支持）
+        if (currentModelSupportsThinking) {
+            const saved = localStorage.getItem('thinking_mode_enabled');
+            thinkingModeEnabled = saved === '1';
+        } else {
+            thinkingModeEnabled = false;
+        }
+        
+        updateThinkingToggleUI();
+        
+    } catch (e) {
+        console.warn('检查模型能力失败:', e);
+        currentModelSupportsThinking = false;
+        updateThinkingToggleUI();
+    }
+}
+
+    // --- UI 工具: Toast 通知 ---
+    function showToast(message, type = 'success') {
+        const container = document.getElementById('toast-container');
+        const toast = document.createElement('div');
+        toast.className = `toast toast-${type}`;
+
+        const icon = type === 'success' ? '<i class="fa-solid fa-check-circle"></i>' :
+                     type === 'error' ? '<i class="fa-solid fa-circle-exclamation"></i>' :
+                     '<i class="fa-solid fa-info-circle"></i>';
+
+        toast.innerHTML = `${icon} <span>${escapeHtml(message)}</span>`;
+
+        container.appendChild(toast);
+
+        // 3秒后移除
+        setTimeout(() => {
+            toast.style.opacity = '0';
+            toast.style.transform = 'translateY(-20px)';
+            setTimeout(() => toast.remove(), 300);
+        }, 3000);
+    }
+
+    // --- UI 工具: 模态框管理 ---
+    function openModal(id) {
+        document.getElementById(id).classList.add('active');
+        // 如果是输入框模态，自动聚焦
+        const input = document.querySelector(`#${id} input`);
+        if (input) setTimeout(() => input.focus(), 100);
+    }
+
+    function closeModal(id) {
+        document.getElementById(id).classList.remove('active');
+    }
+
+    // --- UI 工具: 输入框自适应高度 ---
+    function autoResize(textarea) {
+        textarea.style.height = 'auto';
+        textarea.style.height = Math.min(textarea.scrollHeight, 150) + 'px';
+    }
+
+    // --- UI 工具: 侧边栏/抽屉切换 ---
+    function toggleSidebar() {
+        document.getElementById('sidebar').classList.toggle('open');
+    }
+
+    function togglePermDrawer() {
+        const drawer = document.getElementById('perm-drawer');
+        drawer.classList.toggle('open');
+        if (drawer.classList.contains('open')) {
+            refreshPermViewerOnly();
+        }
+    }
+
+    function toggleTheme() {
+        const html = document.documentElement;
+        const current = html.getAttribute('data-theme');
+        const next = current === 'dark' ? 'light' : 'dark';
+        html.setAttribute('data-theme', next);
+        localStorage.setItem('theme', next);
+    }
+
+    // --- 核心逻辑: 数据加载 ---
+async function loadModels() {
+    try {
+        const select = document.getElementById('model-select');
+        if (!select) return;
+
+        const apiType = getSelectedApiType();
+        const apiKeyIndex = getSelectedApiKeyIndex();
+
+        select.innerHTML = '<option>Loading models...</option>';
+
+        const qs = new URLSearchParams({ api_type: apiType });
+        if (apiKeyIndex !== null) qs.set('api_key_index', String(apiKeyIndex));
+
+        const res = await fetch(`/api/get_models?${qs.toString()}`);
+        const data = await res.json();
+
+        select.innerHTML = '';
+
+        const models = Array.isArray(data.models) ? data.models : [];
+        models.forEach(m => {
+            const opt = document.createElement('option');
+            opt.value = m.id;
+            opt.innerText = (m.display || m.id).replace('models/', '');
+            select.appendChild(opt);
+        });
+
+        if (select.options.length === 0) {
+            select.innerHTML = '<option value="">No models</option>';
+            return;
+        }
+
+        const storageKey = getModelStorageKey(apiType, apiKeyIndex);
+        const saved = localStorage.getItem(storageKey) || localStorage.getItem('selected_model');
+
+        if (saved && Array.from(select.options).some(o => o.value === saved)) {
+            select.value = saved;
+        } else {
+            const preferredKeywords = (apiType === 'google')
+                ? ['gemini-3-flash', 'gemini-2', 'gemini']
+                : ['gpt-4.1', 'gpt-4o', 'gpt-4o-mini', 'o4-mini', 'o3-mini', 'gpt'];
+
+            const preferOpt = Array.from(select.options).find(o =>
+                preferredKeywords.some(k => o.value.toLowerCase().includes(k))
+            );
+
+            select.value = preferOpt ? preferOpt.value : select.options[0].value;
+            
+            localStorage.setItem(storageKey, select.value);
+            localStorage.setItem('selected_model', select.value);
+        }
+
+        // --- 修复重点：合并 onchange 逻辑 ---
+        
+        // 1. 定义统一的事件处理函数
+        select.onchange = () => {
+            localStorage.setItem(storageKey, select.value);
+            localStorage.setItem('selected_model', select.value);
+            checkModelCapabilities(); 
+        };
+
+        // 2. 初始加载后执行一次检查
+        checkModelCapabilities();
+
+        // (原代码中多余的 originalOnChange 逻辑已删除)
+
+    } catch (e) {
+        console.error(e);
+        showToast("模型加载失败", "error");
+    }
+}
+
+// =========================================
+// 重新生成消息
+// =========================================
+async function regenerateMessage(index) {
+    if (!currentChatId) return showToast("请先选择对话", "error");
+    
+    const history = window.currentHistoryCache;
+    if (!history || index < 0 || index >= history.length) {
+        return showToast("无效的消息索引", "error");
+    }
+    
+    const targetMsg = history[index];
+    if (targetMsg.role !== 'model' && targetMsg.role !== 'assistant') {
+        return showToast("只能重新生成 AI 回复", "error");
+    }
+    
+    const container = document.getElementById('chat-container');
+    const msgRows = container.querySelectorAll('.msg-row');
+    const targetRow = msgRows[index];
+    
+    if (!targetRow) return;
+    
+    const bubble = targetRow.querySelector('.bubble');
+    const contentDiv = bubble.querySelector('.msg-content');
+    const reasoningBlock = bubble.querySelector('.reasoning-block');
+    
+    // 添加加载状态
+    bubble.classList.add('regenerating');
+    
+    // 清空内容，显示加载动画
+    if (reasoningBlock) reasoningBlock.remove();
+    contentDiv.innerHTML = `
+        <div class="typing-indicator">
+            <div class="dot"></div><div class="dot"></div><div class="dot"></div>
+        </div>
+    `;
+    
+    const model = document.getElementById('model-select').value;
+    const apiType = getSelectedApiType();
+    const apiKeyIndex = getSelectedApiKeyIndex();
+    
+    let accumulatedContent = "";
+    let accumulatedReasoning = "";
+    
+    try {
+        const response = await fetch('/api/regenerate_message', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({
+                api_type: apiType,
+                api_key_index: apiKeyIndex,
+                chat_id: currentChatId,
+                index: index,
+                model: model,
+                thinking: thinkingModeEnabled
+            })
+        });
+        
+        if (!response.ok) {
+            throw new Error('请求失败');
+        }
+        
+        const reader = response.body.getReader();
+        const decoder = new TextDecoder('utf-8');
+        
+        // 创建思维区域（如果开启了思考模式）
+        let reasoningDiv = null;
+        if (thinkingModeEnabled) {
+            reasoningDiv = createReasoningBlock();
+            contentDiv.parentNode.insertBefore(reasoningDiv, contentDiv);
+        }
+        
+        while (true) {
+            const { done, value } = await reader.read();
+            if (done) break;
+            
+            const chunk = decoder.decode(value, { stream: true });
+            const lines = chunk.split('\n');
+            
+            for (const line of lines) {
+                if (!line.startsWith('data: ')) continue;
+                
+                try {
+                    const data = JSON.parse(line.slice(6));
+                    
+                    if (data.type === 'content') {
+                        accumulatedContent += data.text;
+                        contentDiv.innerHTML = safeRenderMarkdown(accumulatedContent);
+                        contentDiv.querySelectorAll('pre code').forEach(block => hljs.highlightElement(block));
+                        addCodeCopyButtons(contentDiv);
+                    } else if (data.type === 'reasoning') {
+                        accumulatedReasoning += data.text;
+                        if (reasoningDiv) {
+                            updateReasoningContent(reasoningDiv, accumulatedReasoning);
+                        }
+                    } else if (data.type === 'error') {
+                        contentDiv.innerHTML = `<span style="color: var(--danger);">${escapeHtml(data.text)}</span>`;
+                    } else if (data.type === 'done') {
+                        // 完成
+                    }
+                } catch (e) {
+                    // 忽略解析错误
+                }
+            }
+        }
+        
+        // 刷新历史（更新缓存）
+        await selectChat(currentChatId);
+        showToast("重新生成完成");
+        
+    } catch (e) {
+        console.error(e);
+        contentDiv.innerHTML = `<span style="color: var(--danger);">重新生成失败</span>`;
+        showToast("重新生成失败", "error");
+    } finally {
+        bubble.classList.remove('regenerating');
+    }
+}
+
+// 创建思维展示区块
+function createReasoningBlock() {
+    const div = document.createElement('div');
+    div.className = 'reasoning-block';
+    div.innerHTML = `
+        <div class="reasoning-header" onclick="toggleReasoningBlock(this.parentNode)">
+            <div class="reasoning-header-left">
+                <i class="fa-solid fa-lightbulb"></i>
+                <span>思考过程</span>
+            </div>
+            <i class="fa-solid fa-chevron-down reasoning-toggle-icon"></i>
+        </div>
+        <div class="reasoning-content">
+            <div class="reasoning-loading">
+                <i class="fa-solid fa-spinner"></i>
+                <span>正在思考中...</span>
+            </div>
+        </div>
+    `;
+    return div;
+}
+
+// 更新思维内容
+function updateReasoningContent(block, content) {
+    const contentDiv = block.querySelector('.reasoning-content');
+    if (contentDiv) {
+        contentDiv.textContent = content;
+    }
+}
+
+// 切换思维区块展开/收起
+function toggleReasoningBlock(block) {
+    block.classList.toggle('collapsed');
+}
+
+async function loadChatList() {
+    let data = {};
+    try {
+        const res = await fetch('/api/list_chats');
+        data = await res.json().catch(() => ({}));
+        if (!res.ok) {
+            showToast((data && data.error) ? data.error : "对话列表加载失败", "error");
+            return;
+        }
+    } catch (e) {
+        showToast("对话列表加载失败", "error");
+        return;
+    }
+
+    const list = document.getElementById('chat-list');
+    list.innerHTML = '';
+
+    const chats = Array.isArray(data.chats) ? data.chats : [];
+    chats.forEach(id => {
+        const isActive = id === currentChatId ? 'active' : '';
+        const div = document.createElement('div');
+        div.className = `chat-item ${isActive}`;
+        div.onclick = () => selectChat(id);
+
+        // 注意：标题用 escapeHtml；onclick 参数用 JSON.stringify 规避引号问题
+        div.innerHTML = `
+            <div class="chat-item-title"><i class="fa-regular fa-comment-dots"></i> ${escapeHtml(id)}</div>
+            <div class="chat-actions">
+                <i class="fa-solid fa-pen" title="重命名"
+                   onclick='openRenameModal(event, ${JSON.stringify(id)})'></i>
+                <i class="fa-solid fa-trash-can" title="删除"
+                   onclick='confirmDeleteChat(event, ${JSON.stringify(id)})'></i>
+            </div>
+        `;
+        list.appendChild(div);
+    });
+}
+
+
+    // --- 核心逻辑: 对话管理 ---
+async function selectChat(id) {
+    currentChatId = id;
+    document.getElementById('current-chat-title').innerText = id;
+    document.getElementById('sidebar').classList.remove('open'); // 移动端自动收起
+
+    loadChatList(); // 刷新高亮
+
+    let data = {};
+    try {
+        const res = await fetch('/api/get_history', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({ chat_id: id })
+        });
+
+        data = await res.json().catch(() => ({}));
+
+        if (!res.ok) {
+            // 这里最常见就是：后端返回 {error:"非法 chat_id"}，之前会导致 data.history.length 崩溃
+            showToast((data && data.error) ? data.error : "对话加载失败", "error");
+            return;
+        }
+    } catch (e) {
+        showToast("对话加载失败", "error");
+        return;
+    }
+
+    const history = Array.isArray(data.history) ? data.history : [];
+    const container = document.getElementById('chat-container');
+
+    if (history.length === 0) {
+        container.innerHTML = `
+            <div class="empty-state">
+                <i class="fa-solid fa-wind"></i>
+                <h3>暂无消息</h3>
+                <p>在下方输入框开始对话</p>
+            </div>`;
+    } else {
+        renderHistory(history);
+    }
+}
+
+// 2. 新增：打开重命名模态框
+function openRenameModal(e, id) {
+    e.stopPropagation(); // 阻止冒泡，不触发进入聊天
+    chatToRenameId = id;
+    const input = document.getElementById('rename-input');
+    input.value = id; // 预填旧名字
+    openModal('modal-rename');
+
+    // 聚焦并全选文本，方便直接修改
+    setTimeout(() => input.select(), 100);
+
+    // 绑定回车保存
+    input.onkeydown = (ev) => {
+        if(ev.key === 'Enter') confirmRename();
+    };
+}
+
+// 3. 新增：确认重命名逻辑
+async function confirmRename() {
+    const input = document.getElementById('rename-input');
+    const newName = input.value.trim();
+
+    if (!newName) return showToast("名称不能为空", "error");
+    if (newName === chatToRenameId) return closeModal('modal-rename'); // 没改动直接关闭
+
+    try {
+        const res = await fetch('/api/rename_chat', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({
+                old_chat_id: chatToRenameId,
+                new_chat_id: newName
+            })
+        });
+        const data = await res.json();
+
+        if (data.error) {
+            showToast(data.error, "error");
+        } else {
+            // 如果当前正在聊天的就是被改名的这个，更新全局ID和标题
+            if (currentChatId === chatToRenameId) {
+                currentChatId = newName;
+                document.getElementById('current-chat-title').innerText = newName;
+            }
+
+            showToast("重命名成功");
+            closeModal('modal-rename');
+            loadChatList(); // 刷新列表
+        }
+    } catch (e) {
+        showToast("请求失败", "error");
+    }
+}
+// --- 1. 发送消息函数 (支持多模态 + 乐观渲染 + 等待动画) ---
+// --- 3. 重写发送消息函数 (支持流式响应 + 附件 + 自动保存) ---
+async function sendMessage() {
+    if (!currentChatId) return showToast("请先选择对话", "error");
+
+    const input = document.getElementById('user-input');
+    const btn = document.getElementById('send-btn');
+    const msg = input.value.trim();
+    const model = document.getElementById('model-select').value;
+    const apiType = getSelectedApiType();
+    const apiKeyIndex = getSelectedApiKeyIndex();
+
+    if (!msg && currentAttachments.length === 0) return;
+
+    // 1. 禁用输入
+    btn.disabled = true;
+    input.value = '';
+    input.style.height = 'auto';
+
+    // 2. 用户消息先上屏
+    const container = document.getElementById('chat-container');
+    const userRow = document.createElement('div');
+    userRow.className = 'msg-row user';
+
+    const userAttachmentsHtml = currentAttachments.length ? `
+        <div class="msg-media-grid">
+            ${currentAttachments.map(a => {
+                if (a.mime_type.startsWith('image/')) {
+                    return `<img src="${a.previewUrl}" class="chat-image" />`;
+                } else {
+                    return `<div class="chat-file"><i class="fa-solid fa-paperclip"></i>${escapeHtml(a.name)}</div>`;
+                }
+            }).join('')}
+        </div>
+    ` : '';
+
+    {#userRow.innerHTML = `#}
+    {#    <div class="bubble">#}
+    {#        <div class="markdown-body">${userAttachmentsHtml}${escapeHtml(msg)}</div>#}
+    {#    </div>#}
+    {#    <div class="avatar user"><i class="fa-solid fa-user"></i></div>#}
+    {#`;#}
+    {#container.appendChild(userRow);#}
+    {#container.scrollTop = container.scrollHeight;#}
+userRow.innerHTML = `
+    <div class="bubble">
+        <div class="msg-content markdown-body">${userAttachmentsHtml}${safeRenderMarkdown(msg)}</div>
+    </div>
+    <div class="avatar user"><i class="fa-solid fa-user"></i></div>
+`;
+container.appendChild(userRow);
+
+// ✅ 让用户消息也走同样的渲染后处理（代码高亮/复制按钮）
+userRow.querySelectorAll('pre code').forEach(block => hljs.highlightElement(block));
+addCodeCopyButtons(userRow);
+
+container.scrollTop = container.scrollHeight;
+
+    // 3. 清空附件预览
+    const payloadAttachments = [...currentAttachments];
+    currentAttachments = [];
+    document.getElementById('file-preview-container').innerHTML = '';
+    document.getElementById('file-preview-container').style.display = 'none';
+
+    // 4. AI 占位（流式输出容器）
+    const aiRow = document.createElement('div');
+    aiRow.className = 'msg-row model';
+    
+    // 如果开启了思考模式，预留思维区域
+    const reasoningBlockHtml = thinkingModeEnabled ? `
+        <div class="reasoning-block" id="streaming-reasoning">
+            <div class="reasoning-header" onclick="toggleReasoningBlock(this.parentNode)">
+                <div class="reasoning-header-left">
+                    <i class="fa-solid fa-lightbulb"></i>
+                    <span>思考过程</span>
+                </div>
+                <i class="fa-solid fa-chevron-down reasoning-toggle-icon"></i>
+            </div>
+            <div class="reasoning-content">
+                <div class="reasoning-loading">
+                    <i class="fa-solid fa-spinner"></i>
+                    <span>正在思考中...</span>
+                </div>
+            </div>
+        </div>
+    ` : '';
+    
+    aiRow.innerHTML = `
+        <div class="avatar ai"><i class="fa-solid fa-brain"></i></div>
+        <div class="bubble">
+            ${reasoningBlockHtml}
+            <div class="markdown-body ai-bubble-content">
+                <div class="typing-indicator">
+                    <div class="dot"></div><div class="dot"></div><div class="dot"></div>
+                </div>
+            </div>
+        </div>
+    `;
+    container.appendChild(aiRow);
+    container.scrollTop = container.scrollHeight;
+
+    const aiContentDiv = aiRow.querySelector('.ai-bubble-content');
+    const reasoningContentDiv = aiRow.querySelector('#streaming-reasoning .reasoning-content');
+    
+    let accumulatedText = "";
+    let accumulatedReasoning = "";
+    let hasReceivedReasoning = false;
+
+    try {
+        const response = await fetch('/api/chat', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({
+                api_type: apiType,
+                api_key_index: apiKeyIndex,
+                chat_id: currentChatId,
+                message: msg,
+                model: model,
+                thinking: thinkingModeEnabled,
+                attachments: payloadAttachments.map(a => ({
+                    name: a.name,
+                    mime_type: a.mime_type,
+                    data: a.data
+                }))
+            })
+        });
+
+        if (!response.ok) {
+            let detail = "";
+            try {
+                const j = await response.json();
+                detail = j && (j.error || j.message) ? (j.error || j.message) : "";
+            } catch (_) {
+                try { detail = await response.text(); } catch (_) {}
+            }
+            throw new Error(detail || "API response not OK");
+        }
+
+        const reader = response.body.getReader();
+        const decoder = new TextDecoder('utf-8');
+
+        // 移除打字动画
+        aiContentDiv.innerHTML = '';
+
+        while (true) {
+            const { done, value } = await reader.read();
+            if (done) break;
+
+            const chunk = decoder.decode(value, { stream: true });
+            const lines = chunk.split('\n');
+            
+            for (const line of lines) {
+                if (!line.startsWith('data: ')) continue;
+                
+                try {
+                    const data = JSON.parse(line.slice(6));
+                    
+                    if (data.type === 'content') {
+                        accumulatedText += data.text;
+                        aiContentDiv.innerHTML = safeRenderMarkdown(accumulatedText);
+                        aiContentDiv.querySelectorAll('pre code').forEach(block => hljs.highlightElement(block));
+                        addCodeCopyButtons(aiContentDiv);
+                    } else if (data.type === 'reasoning') {
+                        hasReceivedReasoning = true;
+                        accumulatedReasoning += data.text;
+                        if (reasoningContentDiv) {
+                            reasoningContentDiv.textContent = accumulatedReasoning;
+                        }
+                    } else if (data.type === 'error') {
+                        aiContentDiv.innerHTML += `<span style="color: var(--danger);">${escapeHtml(data.text)}</span>`;
+                    }
+                } catch (e) {
+                    // 兼容旧的纯文本流（非 SSE）
+                    // 如果不是 JSON，可能是旧格式
+                }
+            }
+
+            container.scrollTop = container.scrollHeight;
+        }
+        
+        // 如果没有收到思维内容，移除思维区块
+        if (!hasReceivedReasoning) {
+            const streamingReasoning = aiRow.querySelector('#streaming-reasoning');
+            if (streamingReasoning) {
+                streamingReasoning.remove();
+            }
+        }
+
+        // 6. 结束后刷新对话
+        await selectChat(currentChatId);
+
+    } catch (e) {
+        console.error(e);
+        aiContentDiv.innerHTML = `<span style="color: var(--danger);">请求失败或中断: ${escapeHtml(e.message)}</span>`;
+        showToast("发送失败", "error");
+    } finally {
+        btn.disabled = false;
+    }
+}
+
+
+// 辅助：文本复制
+// --- 核心工具：通用复制函数 (支持 HTTP/HTTPS) ---
+function copyTextToClipboard(text) {
+    return new Promise((resolve, reject) => {
+        // 1. 尝试使用现代 API (仅限 HTTPS/localhost)
+        if (navigator.clipboard && window.isSecureContext) {
+            navigator.clipboard.writeText(text).then(() => {
+                resolve();
+            }).catch(err => {
+                console.warn('Clipboard API failed, trying fallback...', err);
+                fallbackCopy(text, resolve, reject);
+            });
+        } else {
+            // 2. 降级方案 (textarea hack)
+            fallbackCopy(text, resolve, reject);
+        }
+    });
+}
+
+function fallbackCopy(text, resolve, reject) {
+    try {
+        const textarea = document.createElement('textarea');
+        textarea.value = text;
+        // 移出可视区域防止闪烁
+        textarea.style.position = 'fixed';
+        textarea.style.left = '-9999px';
+        textarea.style.top = '0';
+        document.body.appendChild(textarea);
+
+        textarea.focus();
+        textarea.select();
+
+        const successful = document.execCommand('copy');
+        document.body.removeChild(textarea);
+
+        if (successful) {
+            resolve();
+        } else {
+            reject(new Error('execCommand copy failed'));
+        }
+    } catch (err) {
+        reject(err);
+    }
+}
+
+// --- 2. 历史记录渲染函数 (支持附件显示 + 完整功能按钮) ---
+function renderHistory(history) {
+    const container = document.getElementById('chat-container');
+    container.innerHTML = '';
+
+    history.forEach((msg, index) => {
+        const isUser = msg.role === 'user';
+        const isAI = msg.role === 'model' || msg.role === 'assistant';
+        const row = document.createElement('div');
+        row.className = `msg-row ${isUser ? 'user' : 'model'}`;
+
+        // 头像
+        const avatar = document.createElement('div');
+        avatar.className = `avatar ${isUser ? 'user' : 'ai'}`;
+        avatar.innerHTML = isUser ? '<i class="fa-solid fa-user"></i>' : '<i class="fa-solid fa-robot"></i>';
+
+        // 1. 处理附件显示
+        let mediaHtml = '';
+        if (msg.attachments && msg.attachments.length > 0) {
+            mediaHtml = '<div class="msg-media-grid">';
+            msg.attachments.forEach(att => {
+                let src = '';
+                if (att.file_path) {
+                    src = `/uploads/${att.file_path}`;
+                } else if (att.data) {
+                    src = `data:${att.mime_type};base64,${att.data}`;
+                }
+
+                if (att.mime_type.startsWith('image/')) {
+                    mediaHtml += `<img src="${src}" class="chat-image" onclick="window.open('${src}')">`;
+                } else {
+                    mediaHtml += `<div class="chat-file"><a href="${src}" target="_blank" style="text-decoration:none; color:inherit;"><i class="fa-solid fa-file-lines"></i> ${att.name || '文件'}</a></div>`;
+                }
+            });
+            mediaHtml += '</div>';
+        }
+
+        // 2. 处理思维内容（reasoning_content）
+        let reasoningHtml = '';
+        if (msg.reasoning_content && msg.reasoning_content.trim()) {
+            reasoningHtml = `
+                <div class="reasoning-block">
+                    <div class="reasoning-header" onclick="toggleReasoningBlock(this.parentNode)">
+                        <div class="reasoning-header-left">
+                            <i class="fa-solid fa-lightbulb"></i>
+                            <span>思考过程</span>
+                        </div>
+                        <i class="fa-solid fa-chevron-down reasoning-toggle-icon"></i>
+                    </div>
+                    <div class="reasoning-content">${escapeHtml(msg.reasoning_content)}</div>
+                </div>
+            `;
+        }
+
+        // 3. 处理文本内容
+        let rawContent = msg.content || "";
+        let contentHtml = '';
+<!--
+        if (isUser) {
+            contentHtml = escapeHtml(rawContent).replace(/\n/g, '<br>');
+        } else {
+            contentHtml = safeRenderMarkdown(rawContent);}
+-->
+        contentHtml = safeRenderMarkdown(rawContent);
+
+        // 4. 状态标签逻辑
+        const isMem = msg.is_memory;
+        const isPerm = msg.memory_type === 2;
+        const memClass = isMem ? 'tag-mem-active' : 'tag-mem-inactive';
+
+        // 5. 构建气泡 HTML（包含重新生成按钮）
+        const bubble = document.createElement('div');
+        bubble.className = 'bubble';
+        
+        // 重新生成按钮只对 AI 消息显示
+        const regenerateBtn = isAI ? `
+            <button class="action-btn regenerate" title="重新生成此回复" onclick="regenerateMessage(${index})">
+                <i class="fa-solid fa-rotate"></i> 重新生成
+            </button>
+        ` : '';
+        
+        bubble.innerHTML = `
+            ${mediaHtml}
+            ${reasoningHtml}
+            <div class="msg-content markdown-body">${contentHtml}</div>
+
+            <div class="bubble-footer">
+                <div class="tags-area">
+                    <div id="btn-mem-${index}" class="tag ${memClass}" onclick="toggleMemory(${index}, 'status')">
+                        ${isMem ? '<i class="fa-solid fa-brain"></i> 记忆中' : '<i class="fa-solid fa-bed"></i> 已遗忘'}
+                    </div>
+                    <div id="btn-type-${index}" class="tag ${isPerm ? 'tag-perm' : 'tag-mem-inactive'}" onclick="toggleMemory(${index}, 'type')">
+                        ${isPerm ? '<i class="fa-solid fa-thumbtack"></i> 永久' : '<i class="fa-solid fa-hourglass"></i> 临时'}
+                    </div>
+                </div>
+
+                <div class="actions-area">
+                    ${regenerateBtn}
+                    <button class="action-btn" title="复制整条消息" onclick="copyMessageText(${index})">
+                        <i class="fa-regular fa-copy"></i> 复制
+                    </button>
+                    <button class="action-btn edit" title="编辑内容" onclick="openEditModal(${index})">
+                        <i class="fa-solid fa-pen-to-square"></i> 编辑
+                    </button>
+                    <button class="action-btn del" title="删除此条消息" onclick="deleteMessageItem(${index})">
+                        <i class="fa-solid fa-trash"></i> 删除
+                    </button>
+                </div>
+            </div>
+        `;
+
+        row.appendChild(avatar);
+        row.appendChild(bubble);
+        container.appendChild(row);
+
+        // 6. 为气泡内的代码块添加独立复制按钮
+        addCodeCopyButtons(bubble);
+    });
+
+    // 缓存当前历史数据
+    window.currentHistoryCache = history;
+
+    // 滚动到底部
+    container.scrollTop = container.scrollHeight;
+}
+// --- 新增：为代码块添加复制按钮 ---
+// --- 增强版：为代码块添加复制和预览按钮 ---
+function addCodeCopyButtons(element) {
+    const pres = element.querySelectorAll('pre');
+    pres.forEach(pre => {
+        if (pre.querySelector('.code-copy-btn')) return;
+
+        // 1. 获取代码信息
+        const codeEl = pre.querySelector('code');
+        const codeText = codeEl ? codeEl.innerText : pre.innerText;
+        const langClass = codeEl ? codeEl.className : '';
+        const isHTML = langClass.includes('html') || langClass.includes('xml');
+
+        // 2. 添加【复制】按钮 (复用 code-action-btn 样式)
+        const copyBtn = document.createElement('button');
+        copyBtn.className = 'code-action-btn code-copy-btn';
+        copyBtn.innerHTML = '<i class="fa-regular fa-copy"></i> 复制';
+        copyBtn.onclick = (e) => {
+            e.stopPropagation();
+            copyTextToClipboard(codeText).then(() => {
+                copyBtn.innerHTML = '<i class="fa-solid fa-check"></i> 已复制';
+                setTimeout(() => copyBtn.innerHTML = '<i class="fa-regular fa-copy"></i> 复制', 2000);
+            }).catch(() => showToast("复制失败", "error"));
+        };
+        pre.appendChild(copyBtn);
+
+        // 3. 如果是 HTML，添加【预览】按钮
+        if (isHTML) {
+            const previewBtn = document.createElement('button');
+            previewBtn.className = 'code-action-btn code-preview-btn';
+            previewBtn.innerHTML = '<i class="fa-solid fa-eye"></i> 预览';
+            
+            previewBtn.onclick = (e) => {
+                e.stopPropagation();
+                toggleHtmlPreview(pre, codeText);
+            };
+            pre.appendChild(previewBtn);
+        }
+    });
+}
+
+// --- 修复版：切换 HTML 预览逻辑 ---
+function toggleHtmlPreview(preElement, htmlContent) {
+    // 检查是否已经创建过 Wrapper
+    let wrapper = preElement.nextElementSibling;
+    const isCreated = wrapper && wrapper.classList.contains('html-preview-wrapper');
+
+    if (!isCreated) {
+        // --- 1. 创建预览容器结构 ---
+        wrapper = document.createElement('div');
+        wrapper.className = 'html-preview-wrapper';
+        
+        // 顶部工具栏
+        const toolbar = document.createElement('div');
+        toolbar.className = 'preview-toolbar';
+        toolbar.innerHTML = `
+            <span><i class="fa-brands fa-html5" style="color:#e34f26"></i> HTML 预览</span>
+            <button class="btn-back-code">
+                <i class="fa-solid fa-code"></i> 返回代码
+            </button>
+        `;
+        
+        // 绑定“返回代码”按钮事件
+        toolbar.querySelector('.btn-back-code').onclick = () => {
+            preElement.style.display = 'block'; // 显示代码
+            wrapper.style.display = 'none';     // 隐藏预览
+        };
+
+        // 实际内容区 (Shadow DOM)
+        const sandbox = document.createElement('div');
+        sandbox.className = 'preview-sandbox';
+        const shadow = sandbox.attachShadow({mode: 'open'});
+        shadow.innerHTML = htmlContent; // 注入 HTML
+
+        // 组装
+        wrapper.appendChild(toolbar);
+        wrapper.appendChild(sandbox);
+        
+        // 插入到 DOM (在 pre 后面)
+        preElement.parentNode.insertBefore(wrapper, preElement.nextSibling);
+    }
+
+    // --- 2. 切换状态 ---
+    // 隐藏代码块
+    preElement.style.display = 'none';
+    // 显示预览容器
+    wrapper.style.display = 'block';
+}
+
+// --- 新增：复制整条消息 ---
+function copyMessageText(index) {
+    if (window.currentHistoryCache && window.currentHistoryCache[index]) {
+        const text = window.currentHistoryCache[index].content;
+
+        // 使用通用复制函数
+        copyTextToClipboard(text).then(() => {
+            showToast("消息内容已复制");
+        }).catch((err) => {
+            console.error(err);
+            showToast("复制失败，请手动选择复制", "error");
+        });
+    }
+}
+
+// --- 新增：删除单条消息 ---
+// --- 交互逻辑: 删除消息 ---
+function deleteMessageItem(index) {
+    // 1. 打开模态框
+    openModal('modal-delete-confirm');
+
+    // 2. 绑定删除按钮点击事件
+    const btn = document.getElementById('btn-confirm-delete');
+    btn.onclick = async () => {
+        try {
+            const res = await fetch('/api/delete_message', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({ chat_id: currentChatId, index: index })
+            });
+            const data = await res.json();
+
+            if (data.success) {
+                showToast("消息已删除");
+                // 重新加载并渲染当前对话
+                selectChat(currentChatId);
+            } else {
+                showToast("删除失败", "error");
+            }
+        } catch (e) {
+            showToast("请求错误", "error");
+        } finally {
+            // 3. 关闭模态框
+            closeModal('modal-delete-confirm');
+        }
+    };
+}
+
+function isMobile() {
+    return window.innerWidth <= 768;
+}
+    // --- 交互逻辑: 记忆控制 ---
+    async function toggleMemory(index, mode) {
+        // 视觉反馈：点击时变成半透明
+        const btnId = mode === 'status' ? `btn-mem-${index}` : `btn-type-${index}`;
+        const btn = document.getElementById(btnId);
+        btn.style.opacity = '0.5';
+
+        try {
+            const res = await fetch('/api/toggle_memory', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({ chat_id: currentChatId, index: index, mode: mode })
+            });
+            const data = await res.json();
+
+            if (data.success) {
+                // 原地更新 UI，不刷新整个列表，体验更好
+                const item = data.item;
+                const isMem = item.is_memory;
+                const isPerm = item.memory_type === 2;
+
+                // 更新状态按钮
+                const memBtn = document.getElementById(`btn-mem-${index}`);
+                memBtn.className = `tag ${isMem ? 'tag-mem-active' : 'tag-mem-inactive'}`;
+                memBtn.innerHTML = isMem ? '<i class="fa-solid fa-brain"></i> 记忆中' : '<i class="fa-solid fa-bed"></i> 已遗忘';
+
+                // 更新类型按钮 (处理联动)
+                const typeBtn = document.getElementById(`btn-type-${index}`);
+                typeBtn.className = `tag ${isPerm ? 'tag-perm' : 'tag-mem-inactive'}`;
+                typeBtn.innerHTML = isPerm ? '<i class="fa-solid fa-thumbtack"></i> 永久' : '<i class="fa-solid fa-hourglass"></i> 临时';
+
+                showToast(mode === 'status' ? '记忆状态已更新' : '记忆类型已变更');
+
+                // 如果侧边抽屉开着，刷新它
+                if (document.getElementById('perm-drawer').classList.contains('open')) {
+                    refreshPermViewerOnly();
+                }
+            }
+        } catch (e) {
+            showToast("操作失败", "error");
+        } finally {
+            btn.style.opacity = '1';
+        }
+    }
+
+    // --- 交互逻辑: 新建对话 ---
+    function confirmNewChat() {
+        const input = document.getElementById('new-chat-name');
+        const name = input.value.trim();
+        if (!name) return showToast("请输入对话名称", "error");
+
+        currentChatId = name;
+        selectChat(name); // 这会自动创建文件（如果是新逻辑）或者加载空历史
+        closeModal('modal-new-chat');
+        input.value = '';
+        showToast("对话已创建");
+    }
+
+    // --- 交互逻辑: 删除对话 ---
+    function confirmDeleteChat(e, id) {
+        e.stopPropagation();
+        chatToDeleteId = id;
+        openModal('modal-delete-confirm');
+
+        // 绑定删除按钮一次性事件
+        const btn = document.getElementById('btn-confirm-delete');
+        btn.onclick = async () => {
+            await fetch('/api/delete_chat', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({ chat_id: chatToDeleteId })
+            });
+
+            if (currentChatId === chatToDeleteId) {
+                currentChatId = '';
+                document.getElementById('current-chat-title').innerText = "未选择对话";
+                document.getElementById('chat-container').innerHTML = `
+                    <div class="empty-state">
+                        <i class="fa-solid fa-trash-can"></i>
+                        <h3>已删除</h3>
+                    </div>`;
+            }
+
+            loadChatList();
+            closeModal('modal-delete-confirm');
+            showToast("对话已彻底删除");
+        };
+    }
+async function pickSummaryPreset() {
+    // 1) 打开弹窗
+    openModal('modal-summary-preset');
+
+    const loadingEl = document.getElementById('summary-preset-loading');
+    const errorEl = document.getElementById('summary-preset-error');
+    const listEl = document.getElementById('summary-preset-list');
+
+    // 注意：这里我们通过 ID 获取按钮，稍后会处理它的事件绑定
+    let confirmBtn = document.getElementById('btn-summary-preset-confirm');
+
+    // --- 清理旧状态 ---
+    errorEl.style.display = 'none';
+    errorEl.textContent = '';
+    listEl.innerHTML = ''; // 清空列表
+    loadingEl.style.display = 'flex'; // 使用 flex 以配合 CSS 中的居中对齐
+    confirmBtn.disabled = true;
+
+    // 2) 拉取预设列表
+    let presets = [];
+    try {
+        const r = await fetch('/api/memory_summary_presets', { method: 'GET' });
+        const data = await r.json();
+        presets = (data && data.presets) ? data.presets : [];
+
+        if (!Array.isArray(presets) || presets.length === 0) {
+            throw new Error('服务端返回的预设列表为空');
+        }
+    } catch (e) {
+        // --- 错误处理与兜底 ---
+        loadingEl.style.display = 'none';
+        errorEl.style.display = 'flex'; // flex 布局以对齐图标
+        errorEl.textContent = '加载失败，使用默认配置：' + (e && e.message ? e.message : '网络异常');
+
+        // 兜底数据：确保即使报错也能显示一个默认选项
+        presets = [{
+            key: 'truth_table',
+            name: '通用：真值记忆表',
+            description: '标准模式，平衡细节保留与 Token 消耗（推荐）。'
+        }];
+    }
+
+    // 3) 渲染美化后的列表
+    loadingEl.style.display = 'none';
+    const groupName = 'summary-preset-radio';
+
+    presets.forEach((p, idx) => {
+        // 创建 label 容器，应用 CSS 类 .preset-option
+        const row = document.createElement('label');
+        row.className = 'preset-option'; // <--- 关键：应用美化样式
+
+        // 组装 HTML 结构：Radio + 文字区域
+        // 使用 escapeHtml 防止注入，同时检查 description 是否存在
+        const descText = p.description ? escapeHtml(String(p.description)) : '暂无详细描述';
+
+        row.innerHTML = `
+            <input type="radio" name="${groupName}" value="${escapeHtml(String(p.key))}" ${idx === 0 ? 'checked' : ''} />
+            <div class="preset-content">
+                <span class="preset-title">${escapeHtml(String(p.name || p.key))}</span>
+                <span class="preset-desc">${descText}</span>
+            </div>
+        `;
+
+        listEl.appendChild(row);
+    });
+
+    confirmBtn.disabled = false;
+
+    // 4) 等待用户确认 (Promise 封装)
+    return new Promise((resolve) => {
+        const handler = () => {
+            const checked = document.querySelector(`input[name="${groupName}"]:checked`);
+            // 获取选中值，如果没选中则使用默认
+            const presetKey = checked ? checked.value : (presets[0]?.key || 'truth_table');
+
+            closeModal('modal-summary-preset');
+
+            // 这里的 removeEventListener 其实在 replaceWith 后不是必须的，但保留好习惯
+            // confirmBtn.removeEventListener('click', handler);
+            resolve(presetKey);
+        };
+
+        // --- 防止重复绑定的最佳实践 ---
+        // 克隆节点可以自动移除之前绑定的所有监听器，防止多次点击触发多次 resolve
+        const newBtn = confirmBtn.cloneNode(true);
+        confirmBtn.parentNode.replaceChild(newBtn, confirmBtn);
+        confirmBtn = newBtn; // 更新引用
+
+        confirmBtn.disabled = false;
+        confirmBtn.addEventListener('click', handler);
+
+        // 可选：允许双击选项直接确认（提升体验）
+        // listEl.querySelectorAll('.preset-option').forEach(option => {
+        //     option.addEventListener('dblclick', handler);
+        // });
+    });
+}
+
+    // --- 交互逻辑: 浓缩记忆 ---
+async function requestSummary() {
+  if (!currentChatId) return showToast("请先选择对话", "error");
+
+  // 先让用户选任务方向（动态加载）
+  let presetKey = 'truth_table';
+  try {
+    presetKey = await pickSummaryPreset();
+  } catch (e) {
+    // 理论上不会走到这，兜底
+    presetKey = 'truth_table';
+  }
+
+  showToast("正在请求 AI 浓缩记忆...", "info");
+  try {
+    const model = document.getElementById('model-select').value;
+
+    const apiType = getSelectedApiType();
+    const apiKeyIndex = getSelectedApiKeyIndex();
+
+    const res = await fetch('/api/summarize_memory', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({
+        chat_id: currentChatId,
+        model: model,
+        api_type: apiType,
+        api_key_index: apiKeyIndex,
+        preset_key: presetKey
+      })
+    });
+
+    const data = await res.json();
+
+    if (data.summary_proposal) {
+      document.getElementById('summary-edit').value = data.summary_proposal;
+      openModal('modal-summary');
+    } else {
+      showToast(data.error || "没有可浓缩的内容", "error");
+    }
+  } catch (e) {
+    showToast("请求超时或出错", "error");
+  }
+}
+
+
+
+    async function saveSummary() {
+        const summary = document.getElementById('summary-edit').value;
+        const res = await fetch('/api/confirm_summary', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({ chat_id: currentChatId, summary: summary })
+        });
+        const data = await res.json();
+
+        if (data.success) {
+            closeModal('modal-summary');
+            renderHistory(data.history);
+            showToast("记忆已成功浓缩");
+        }
+    }
+
+/* =========================
+ * AI Discuss (Multi-model)
+ * ========================= */
+
+const AI_DISCUSS_STORE_KEY = "ai_discuss_config_v1";
+
+let aiDiscussDraft = {
+  participants: [],
+  rounds: 1,
+  thinking: false,
+};
+
+function _getDefaultDiscussParticipant() {
+  const apiType = getSelectedApiType();
+  const apiKeyIndex = getSelectedApiKeyIndex();
+  const model = (document.getElementById('model-select')?.value || "");
+  return { api_type: apiType, api_key_index: apiKeyIndex, model };
+}
+
+function _loadAiDiscussDraft() {
+  try {
+    const raw = localStorage.getItem(AI_DISCUSS_STORE_KEY);
+    if (!raw) return;
+    const parsed = JSON.parse(raw);
+    if (parsed && typeof parsed === "object") aiDiscussDraft = {
+      participants: Array.isArray(parsed.participants) ? parsed.participants : [],
+      rounds: Number.isFinite(+parsed.rounds) ? +parsed.rounds : 1,
+      thinking: !!parsed.thinking,
+        seed: parsed.seed || "" // ✅ 新增：读取 seed
+    };
+  } catch (_) {}
+}
+
+function _saveAiDiscussDraft() {
+  try {
+    localStorage.setItem(AI_DISCUSS_STORE_KEY, JSON.stringify(aiDiscussDraft));
+  } catch (_) {}
+}
+
+function openAiDiscussModal() {
+  if (!currentChatId) return showToast("请先选择对话", "error");
+
+  _loadAiDiscussDraft();
+
+  // 首次打开：默认带一个“当前选择的模型”
+  if (!aiDiscussDraft.participants.length) {
+    aiDiscussDraft.participants = [_getDefaultDiscussParticipant()];
+  }
+
+  // rounds/thinking 默认值
+  const roundsEl = document.getElementById("ai-discuss-rounds");
+  const thinkingEl = document.getElementById("ai-discuss-thinking");
+  // ✅ 新增：获取 seed 输入框
+  const seedEl = document.getElementById("ai-discuss-seed");
+
+  roundsEl.value = Math.max(1, Math.min(50, aiDiscussDraft.rounds || 1));
+  thinkingEl.checked = (aiDiscussDraft.thinking ?? false);
+  // ✅ 新增：设置 seed 值
+  if (seedEl) seedEl.value = aiDiscussDraft.seed || "";
+
+  renderAiDiscussList();
+  openModal("modal-ai-discuss");
+}
+
+function addAiDiscussRow() {
+  aiDiscussDraft.participants.push(_getDefaultDiscussParticipant());
+  _saveAiDiscussDraft();
+  renderAiDiscussList();
+}
+
+function removeAiDiscussRow(idx) {
+  aiDiscussDraft.participants.splice(idx, 1);
+  _saveAiDiscussDraft();
+  renderAiDiscussList();
+}
+
+function _cloneOptions(fromSelect, toSelect) {
+  toSelect.innerHTML = "";
+  Array.from(fromSelect.options).forEach(opt => {
+    const o = document.createElement("option");
+    o.value = opt.value;
+    o.textContent = opt.textContent;
+    toSelect.appendChild(o);
+  });
+}
+
+// ==========================================
+// 1. 修复 Key 加载：从 data.keys 数组解析，而非 data.count
+// ==========================================
+// 替换原有的 _loadApiKeyIndexOptionsForSelect 函数
+async function _loadApiKeyIndexOptionsForSelect(apiType, selectEl, selectedVal) {
+  // 1. 重置为默认 Auto
+  selectEl.innerHTML = `<option value="">Key: Auto</option>`;
+  
+  try {
+    const res = await fetch(`/api/get_api_keys?api_type=${encodeURIComponent(apiType)}`);
+    const data = await res.json();
+    
+    // 2. 使用与 Header 完全一致的 keys 数组解析逻辑
+    const keys = Array.isArray(data.keys) ? data.keys : [];
+
+    keys.forEach(k => {
+        const idx = k.index;
+        const name = k.name || k.display || `Key #${idx}`;
+        const opt = document.createElement("option");
+        opt.value = String(idx);
+        opt.textContent = name;
+        selectEl.appendChild(opt);
+    });
+
+  } catch (e) {
+    console.warn("AI Discuss key load failed:", e);
+  }
+
+  // 3. 恢复选中状态
+  if (selectedVal !== undefined && selectedVal !== null && String(selectedVal) !== "") {
+    const exists = Array.from(selectEl.options).some(o => o.value === String(selectedVal));
+    selectEl.value = exists ? String(selectedVal) : "";
+  } else {
+    selectEl.value = "";
+  }
+}
+
+const _aiDiscussModelCache = new Map(); // key: `${apiType}::${apiKeyIndex}`
+
+// ==========================================
+// 2. 优化模型加载：增加 display 处理，使其视觉上与 Header 一致
+// ==========================================
+// 替换原有的 _loadModelsForSelect 函数
+async function _loadModelsForSelect(apiType, apiKeyIndex, selectEl, selectedModel) {
+  // 1. 清空并显示 Loading
+  selectEl.innerHTML = '<option>Loading...</option>';
+
+  try {
+    // 2. 构建查询参数 (参照 Header 的 loadModels 逻辑)
+    const qs = new URLSearchParams({ api_type: apiType });
+    
+    // 只有当 apiKeyIndex 确实有值(且不为Auto/空)时才传参
+    if (apiKeyIndex !== null && apiKeyIndex !== undefined && String(apiKeyIndex) !== "") {
+        qs.set('api_key_index', String(apiKeyIndex));
+    }
+
+    // 3. 直接请求，不使用本地缓存，确保数据最新
+    const res = await fetch(`/api/get_models?${qs.toString()}`);
+    const data = await res.json();
+    
+    const models = Array.isArray(data.models) ? data.models : [];
+
+    // 4. 重新渲染选项
+    selectEl.innerHTML = "";
+    
+    if (models.length === 0) {
+        selectEl.innerHTML = '<option value="">No models</option>';
+        return;
+    }
+
+    models.forEach(m => {
+        const opt = document.createElement("option");
+        opt.value = m.id;
+        // 保持与 Header 一致的美化逻辑 (去除 models/ 前缀)
+        opt.textContent = (m.display || m.id).replace('models/', '');
+        selectEl.appendChild(opt);
+    });
+
+    // 5. 恢复选中状态
+    if (selectedModel && Array.from(selectEl.options).some(o => o.value === selectedModel)) {
+        selectEl.value = selectedModel;
+    } else {
+        // 默认选中第一个
+        selectEl.value = selectEl.options[0].value;
+    }
+
+  } catch (e) {
+    console.error("AI Discuss model load failed:", e);
+    selectEl.innerHTML = '<option value="">Load Failed</option>';
+  }
+}
+
+// 替换原有的 _hydrateDiscussRow 函数
+async function _hydrateDiscussRow(i) {
+  const p = aiDiscussDraft.participants[i];
+  if (!p) return;
+
+  const providerSel = document.getElementById(`ai-discuss-provider-${i}`);
+  const keySel = document.getElementById(`ai-discuss-key-${i}`);
+  const modelSel = document.getElementById(`ai-discuss-model-${i}`);
+  
+  if (!providerSel || !keySel || !modelSel) return;
+
+  // 1. 等待 Key 列表加载完成
+  await _loadApiKeyIndexOptionsForSelect(p.api_type, keySel, p.api_key_index);
+  
+  // [关键修复]：加载完 Key 列表后，必须根据 DOM 实际选中的值（因为可能原来的 Key 不存在了回退到了 Auto）更新 p 对象
+  p.api_key_index = keySel.value; 
+
+  // 2. 使用确认存在的 Key 加载模型
+  await _loadModelsForSelect(p.api_type, p.api_key_index, modelSel, p.model);
+  
+  // 3. 加载完模型后，更新 p 对象中的 model
+  p.model = modelSel.value;
+
+  _saveAiDiscussDraft();
+}
+
+function renderAiDiscussList() {
+  const wrap = document.getElementById("ai-discuss-list");
+  wrap.innerHTML = "";
+
+  const providerSource = document.getElementById("provider-select");
+
+  aiDiscussDraft.participants.forEach((p, i) => {
+    const row = document.createElement("div");
+    row.className = "ai-discuss-item";
+
+    // 【修改点】新增了 input.role-input 用于输入角色名
+    row.innerHTML = `
+      <input type="text" class="role-input" id="ai-discuss-role-${i}" 
+             placeholder="角色名 (如: 侦探)" value="${escapeHtml(p.custom_name || '')}" />
+      <select class="model-selector" id="ai-discuss-provider-${i}" title="Provider"></select>
+      <select class="model-selector" id="ai-discuss-key-${i}" title="API Key"></select>
+      <select class="model-selector" id="ai-discuss-model-${i}" title="Model"></select>
+      <button class="ai-discuss-btn-mini danger" title="移除" type="button">
+        <i class="fa-solid fa-minus"></i>
+      </button>
+    `;
+
+    wrap.appendChild(row);
+
+const providerSel = row.querySelector(`#ai-discuss-provider-${i}`);
+    const keySel = row.querySelector(`#ai-discuss-key-${i}`);
+    const modelSel = row.querySelector(`#ai-discuss-model-${i}`);
+    const removeBtn = row.querySelector("button.ai-discuss-btn-mini");
+    
+    // 【修改点】获取 input 并绑定事件
+    const roleInput = row.querySelector(`#ai-discuss-role-${i}`);
+    
+    // 绑定角色名输入事件
+    roleInput.oninput = () => {
+        p.custom_name = roleInput.value; // 实时保存到 draft
+        _saveAiDiscussDraft();
+    };
+
+    // provider options 直接复用 header 的 provider-select
+    _cloneOptions(providerSource, providerSel);
+    providerSel.value = p.api_type || providerSource.value;
+
+    removeBtn.onclick = () => removeAiDiscussRow(i);
+
+    providerSel.onchange = async () => {
+      p.api_type = providerSel.value;
+      p.api_key_index = "";
+      p.model = "";
+      _saveAiDiscussDraft();
+      await _hydrateDiscussRow(i);
+    };
+
+    keySel.onchange = async () => {
+      p.api_key_index = keySel.value;
+      p.model = "";
+      _saveAiDiscussDraft();
+      await _loadModelsForSelect(p.api_type, p.api_key_index, modelSel, p.model);
+      p.model = modelSel.value;
+      _saveAiDiscussDraft();
+    };
+
+    modelSel.onchange = () => {
+      p.model = modelSel.value;
+      _saveAiDiscussDraft();
+    };
+
+    // 首次填充 keys/models
+    p.api_type = providerSel.value;
+    _hydrateDiscussRow(i);
+  });
+
+  if (!aiDiscussDraft.participants.length) {
+    const empty = document.createElement("div");
+    empty.className = "modal-desc";
+    empty.style.marginTop = "8px";
+    empty.textContent = "当前没有模型，点击“添加模型”开始。";
+    wrap.appendChild(empty);
+  }
+}
+
+async function startAiDiscuss() {
+    if (!currentChatId) return showToast("请先选择对话", "error");
+
+    // 1. 修正 ID 获取 (改为与 HTML 一致的 ID)
+    const roundsInput = document.getElementById('ai-discuss-rounds');
+    const rounds = roundsInput ? (parseInt(roundsInput.value) || 1) : 1;
+    // ✅ 修复开始：获取 Seed 并保存到 draft 这里的语法错误
+    const seedInput = document.getElementById('ai-discuss-seed');
+    const seed = seedInput ? seedInput.value.trim() : "";
+        aiDiscussDraft.seed = seed;
+    aiDiscussDraft.rounds = rounds;
+// 也顺便保存轮数
+    _saveAiDiscussDraft();
+    const thinkingInput = document.getElementById('ai-discuss-thinking');
+    const discussThinkingEnabled = thinkingInput ? !!thinkingInput.checked : false;
+
+    // 2. 修正参与者获取逻辑
+    // 不要去 scrape DOM (.ai-discuss-model-item 是错的类名)
+    // 直接使用全局维护的 aiDiscussDraft 对象，它在 renderAiDiscussList 的 onchange 中已经更新了
+    if (!aiDiscussDraft || !aiDiscussDraft.participants || aiDiscussDraft.participants.length === 0) {
+        return showToast("请至少添加一个模型", "error");
+    }
+
+    // 过滤并格式化数据
+        // 过滤并格式化数据
+    const participants = aiDiscussDraft.participants
+        .filter(p => p.model && p.model.trim() !== "") 
+        .map(p => ({
+            api_type: p.api_type || "google",
+            api_key_index: (p.api_key_index === "" || p.api_key_index === null) ? null : Number(p.api_key_index),
+            model: p.model,
+            custom_name: p.custom_name || ""  // 【关键修改】将自定义名字传给后端
+        }));
+
+    if (participants.length === 0) {
+        return showToast("请确保所有行都已选择有效的模型", "error");
+    }
+
+    // UI：按钮状态
+    const startBtn = document.getElementById('btn-ai-discuss-start');
+    const originalText = startBtn.innerText;
+    startBtn.disabled = true;
+    startBtn.innerText = "迭代中…";
+
+    closeModal('modal-ai-discuss');
+
+    const container = document.getElementById('chat-container');
+
+    // 创建一条“流式 AI 气泡”
+    function createStreamingAiRow(thinkingEnabled) {
+        // 如果当前是空状态，先清掉
+        const empty = container.querySelector('.empty-state');
+        if (empty) empty.remove();
+
+        const aiRow = document.createElement('div');
+        aiRow.className = 'msg-row model';
+
+        const reasoningBlockHtml = thinkingEnabled ? `
+            <div class="reasoning-block">
+                <div class="reasoning-header" onclick="toggleReasoningBlock(this.parentNode)">
+                    <div class="reasoning-header-left">
+                        <i class="fa-solid fa-lightbulb"></i>
+                        <span>思考过程</span>
+                    </div>
+                    <i class="fa-solid fa-chevron-down reasoning-toggle-icon"></i>
+                </div>
+                <div class="reasoning-content">
+                    <div class="reasoning-loading">
+                        <i class="fa-solid fa-spinner"></i>
+                        <span>正在思考中...</span>
+                    </div>
+                </div>
+            </div>
+        ` : '';
+
+        aiRow.innerHTML = `
+            <div class="avatar ai"><i class="fa-solid fa-brain"></i></div>
+            <div class="bubble">
+                ${reasoningBlockHtml}
+                <div class="markdown-body ai-bubble-content">
+                    <div class="typing-indicator">
+                        <div class="dot"></div><div class="dot"></div><div class="dot"></div>
+                    </div>
+                </div>
+            </div>
+        `;
+
+        container.appendChild(aiRow);
+        container.scrollTop = container.scrollHeight;
+
+        const aiContentDiv = aiRow.querySelector('.ai-bubble-content');
+        const reasoningContentDiv = aiRow.querySelector('.reasoning-block .reasoning-content');
+
+        return { aiRow, aiContentDiv, reasoningContentDiv };
+    }
+
+    // SSE 解析
+    function consumeSseBuffer(buffer, onEvent) {
+        buffer = buffer.replace(/\r\n/g, "\n");
+        const parts = buffer.split("\n\n");
+        const remain = parts.pop(); // 未完成的留到下次
+        for (const part of parts) {
+            const lines = part.split("\n");
+            for (const line of lines) {
+                if (!line.startsWith("data: ")) continue;
+                const payload = line.slice(6).trim();
+                if (!payload) continue;
+                try {
+                    onEvent(JSON.parse(payload));
+                } catch (e) {
+                    // 忽略单条解析失败
+                }
+            }
+        }
+        return remain;
+    }
+
+    // 当前正在流式的那条消息
+    let current = null;
+
+    function finalizeCurrentIfNeeded() {
+        if (!current) return;
+
+        // 最终渲染 markdown + 高亮 + 复制按钮
+        current.aiContentDiv.innerHTML = safeRenderMarkdown(current.accumulatedContent || "");
+        current.aiContentDiv.querySelectorAll('pre code').forEach(block => hljs.highlightElement(block));
+        addCodeCopyButtons(current.aiContentDiv);
+
+        // 思考区：如果开启了但没收到 reasoning，就移除空块
+        if (current.thinkingEnabled && !current.hasReceivedReasoning) {
+            const rb = current.aiRow.querySelector('.reasoning-block');
+            if (rb) rb.remove();
+        } else if (current.thinkingEnabled && current.reasoningContentDiv && current.accumulatedReasoning) {
+            current.reasoningContentDiv.innerHTML = '';
+            current.reasoningContentDiv.textContent = current.accumulatedReasoning;
+        }
+
+        current = null;
+    }
+
+    try {
+        const res = await fetch('/api/ai_discuss', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                chat_id: currentChatId,
+                rounds: rounds,
+                seed_prompt:seed,
+                thinking: discussThinkingEnabled,
+                participants: participants
+            })
+        });
+
+        if (!res.ok) {
+            let detail = "";
+            try {
+                const j = await res.json();
+                detail = j && (j.error || j.message) ? (j.error || j.message) : "";
+            } catch (_) {
+                try { detail = await res.text(); } catch (_) {}
+            }
+            throw new Error(detail || "智能迭代请求失败");
+        }
+
+        const reader = res.body.getReader();
+        const decoder = new TextDecoder('utf-8');
+        let buffer = "";
+
+        while (true) {
+            const { done, value } = await reader.read();
+            if (done) break;
+
+            buffer += decoder.decode(value, { stream: true });
+            buffer = consumeSseBuffer(buffer, (data) => {
+                const t = data.type;
+
+                if (t === "message_start") {
+                    finalizeCurrentIfNeeded();
+                    const row = createStreamingAiRow(discussThinkingEnabled);
+                    current = {
+                        ...row,
+                        thinkingEnabled: discussThinkingEnabled,
+                        accumulatedContent: "",
+                        accumulatedReasoning: "",
+                        hasReceivedReasoning: false,
+                        clearedTyping: false
+                    };
+                    return;
+                }
+
+                if (t === "content") {
+                    if (!current) return;
+
+                    if (!current.clearedTyping) {
+                        current.aiContentDiv.innerHTML = "";
+                        current.clearedTyping = true;
+                    }
+
+                    current.accumulatedContent += (data.text || "");
+                    current.aiContentDiv.innerHTML = safeRenderMarkdown(current.accumulatedContent);
+                    current.aiContentDiv.querySelectorAll('pre code').forEach(block => hljs.highlightElement(block));
+                    addCodeCopyButtons(current.aiContentDiv);
+
+                    container.scrollTop = container.scrollHeight;
+                    return;
+                }
+
+                if (t === "reasoning") {
+                    if (!current) return;
+                    current.hasReceivedReasoning = true;
+                    current.accumulatedReasoning += (data.text || "");
+
+                    if (current.reasoningContentDiv) {
+                        current.reasoningContentDiv.innerHTML = "";
+                        current.reasoningContentDiv.textContent = current.accumulatedReasoning;
+                        container.scrollTop = container.scrollHeight;
+                    }
+                    return;
+                }
+
+                if (t === "message_done") {
+                    finalizeCurrentIfNeeded();
+                    return;
+                }
+
+                if (t === "error") {
+                    const msg = data.text || "发生错误";
+                    showToast(msg, data.fatal ? "error" : "warn");
+
+                    if (current) {
+                        current.accumulatedContent += `\n\n> ⚠️ ${msg}\n`;
+                        current.aiContentDiv.innerHTML = safeRenderMarkdown(current.accumulatedContent);
+                    }
+                    return;
+                }
+
+                if (t === "done") {
+                    finalizeCurrentIfNeeded();
+                    return;
+                }
+            });
+        }
+
+        await selectChat(currentChatId);
+        if (document.getElementById('perm-drawer')?.classList.contains('open')) {
+            refreshPermViewerOnly();
+        }
+
+        showToast("智能迭代完成 ✅");
+
+    } catch (e) {
+        console.error(e);
+        finalizeCurrentIfNeeded();
+        showToast(e.message || "智能迭代失败", "error");
+    } finally {
+        startBtn.disabled = false;
+        startBtn.innerText = originalText;
+    }
+}
+
+
+
+    // --- 交互逻辑: 永久记忆抽屉 ---
+async function refreshPermViewerOnly() {
+    if (!currentChatId) return;
+
+    let data = {};
+    try {
+        const res = await fetch('/api/get_history', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({ chat_id: currentChatId })
+        });
+
+        data = await res.json().catch(() => ({}));
+        if (!res.ok) {
+            showToast((data && data.error) ? data.error : "加载永久记忆失败", "error");
+            return;
+        }
+    } catch (e) {
+        showToast("加载永久记忆失败", "error");
+        return;
+    }
+
+    const content = document.getElementById('perm-list-content');
+    const history = Array.isArray(data.history) ? data.history : [];
+    const perms = history.map((m, idx) => ({...m, idx})).filter(m => m.memory_type === 2);
+
+    if (perms.length === 0) {
+        content.innerHTML = `
+            <div style="text-align:center; padding:40px; color:var(--text-sec);">
+                <p>暂无永久记忆</p>
+                <p style="font-size:12px; margin-top:8px;">点击消息下方的“临时”按钮将其固定。</p>
+            </div>`;
+        return;
+    }
+
+    content.innerHTML = perms.map(m => `
+        <div class="perm-item">
+            <div class="perm-header">
+                <span><i class="fa-solid fa-fingerprint"></i> MSG #${m.idx}</span>
+                <div style="display:flex; gap:8px;">
+                    <i class="fa-solid fa-trash-can" style="cursor:pointer; color:var(--text-muted); transition:0.2s;"
+                       onmouseover="this.style.color='var(--danger)'"
+                       onmouseout="this.style.color='var(--text-muted)'"
+                       title="彻底删除此条记忆"
+                       onclick="deletePermItem(${m.idx})"></i>
+
+                    <i class="fa-solid fa-floppy-disk" style="cursor:pointer; color:var(--success);"
+                       title="保存修改"
+                       onclick="saveDirectEdit(${m.idx}, this)"></i>
+                </div>
+            </div>
+            <textarea id="edit-perm-${m.idx}" class="perm-edit-area">${escapeHtml(m.content || "")}</textarea>
+        </div>
+    `).join('');
+}
+
+// 2. 新增：处理添加永久记忆
+function openAddPermModal() {
+    if(!currentChatId) return showToast("请先选择对话", "error");
+    document.getElementById('new-perm-content').value = ''; // 清空
+    openModal('modal-add-perm');
+    setTimeout(() => document.getElementById('new-perm-content').focus(), 100);
+}
+
+async function confirmAddPerm() {
+    const content = document.getElementById('new-perm-content').value.trim();
+    if(!content) return showToast("内容不能为空", "error");
+
+    try {
+        const res = await fetch('/api/add_permanent_memory', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({ chat_id: currentChatId, content: content })
+        });
+        const data = await res.json();
+
+        if(data.success) {
+            closeModal('modal-add-perm');
+            showToast("永久记忆已添加");
+
+            // 刷新抽屉
+            refreshPermViewerOnly();
+            // 如果主界面有显示历史，也可以选择刷新主界面: selectChat(currentChatId);
+        }
+    } catch(e) {
+        showToast("添加失败", "error");
+    }
+}
+
+// 3. 新增：处理删除逻辑
+// --- 交互逻辑: 删除永久记忆 ---
+function deletePermItem(index) {
+    // 1. 打开模态框
+    openModal('modal-delete-confirm');
+
+    // 2. 绑定删除按钮点击事件
+    const btn = document.getElementById('btn-confirm-delete');
+    btn.onclick = async () => {
+        try {
+            const res = await fetch('/api/delete_message', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({ chat_id: currentChatId, index: index })
+            });
+
+            const data = await res.json();
+            if(data.success) {
+                showToast("记忆已删除");
+                // 刷新记忆列表
+                refreshPermViewerOnly();
+            } else {
+                showToast(data.error || "删除失败", "error");
+            }
+        } catch(e) {
+            showToast("请求出错", "error");
+        } finally {
+            // 3. 关闭模态框
+            closeModal('modal-delete-confirm');
+        }
+    };
+}
+    async function saveDirectEdit(index, iconBtn) {
+        const textarea = document.getElementById(`edit-perm-${index}`);
+        const newContent = textarea.value;
+
+        // 简单动画反馈
+        iconBtn.className = "fa-solid fa-spinner fa-spin";
+
+        try {
+            await fetch('/api/update_message', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({ chat_id: currentChatId, index: index, content: newContent })
+            });
+
+            iconBtn.className = "fa-solid fa-check";
+            setTimeout(() => iconBtn.className = "fa-solid fa-floppy-disk", 2000);
+            showToast("永久记忆已更新");
+
+            // 同步主界面
+            selectChat(currentChatId);
+        } catch (e) {
+            iconBtn.className = "fa-solid fa-xmark";
+            showToast("保存失败", "error");
+        }
+    }
+
+// --- 新增：处理文件选择 ---
+async function handleFileSelect(input) {
+    const files = Array.from(input.files);
+    if(files.length === 0) return;
+
+    for (const file of files) {
+        // 简单限制大小 (例如 5MB)
+        if (file.size > 5 * 1024 * 1024) {
+            showToast(`文件 ${file.name} 太大，跳过`, "error");
+            continue;
+        }
+
+        const base64Data = await toBase64(file);
+        // 去掉 data:image/png;base64, 前缀，后端 API 只需要 raw base64
+        const rawBase64 = base64Data.split(',')[1];
+
+        currentAttachments.push({
+            name: file.name,
+            mime_type: file.type,
+            data: rawBase64,
+            previewUrl: base64Data //用于前端预览
+        });
+    }
+
+    renderPreviews();
+    input.value = ''; // 重置 input 以便重复选择同名文件
+}
+
+function toBase64(file) {
+    return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.readAsDataURL(file);
+        reader.onload = () => resolve(reader.result);
+        reader.onerror = error => reject(error);
+    });
+}
+
+function renderPreviews() {
+    const container = document.getElementById('file-preview-container');
+    if (currentAttachments.length === 0) {
+        container.style.display = 'none';
+        container.innerHTML = '';
+        return;
+    }
+
+    container.style.display = 'flex';
+    container.innerHTML = currentAttachments.map((file, index) => {
+        let bgStyle = '';
+        let iconHtml = '<i class="fa-solid fa-file"></i>';
+
+        if (file.mime_type.startsWith('image/')) {
+            bgStyle = `background-image: url('${file.previewUrl}');`;
+            iconHtml = ''; // 图片显示背景，不显示图标
+        } else if (file.mime_type === 'application/pdf') {
+            iconHtml = '<i class="fa-solid fa-file-pdf" style="color:#ef4444"></i>';
+        }
+
+        return `
+            <div class="preview-item" style="${bgStyle}">
+                ${iconHtml}
+                <div class="preview-close" onclick="removeAttachment(${index})">
+                    <i class="fa-solid fa-times"></i>
+                </div>
+            </div>`;
+    }).join('');
+
+    // 自动调整输入框位置（如果需要）
+}
+
+function removeAttachment(index) {
+    currentAttachments.splice(index, 1);
+    renderPreviews();
+}
+// --- 1. 桌面端侧边栏切换 ---
+function toggleSidebarDesktop() {
+    const sidebar = document.getElementById('sidebar');
+    sidebar.classList.toggle('collapsed');
+}
+
+// --- 2. 编辑消息逻辑 ---
+let editingMsgIndex = null; // 全局变量暂存当前编辑的索引
+
+function openEditModal(index) {
+    if (!window.currentHistoryCache || !window.currentHistoryCache[index]) return;
+
+    editingMsgIndex = index;
+    const originalContent = window.currentHistoryCache[index].content;
+
+    const textarea = document.getElementById('edit-msg-input');
+    textarea.value = originalContent;
+
+    openModal('modal-edit-msg');
+}
+
+async function confirmEditMessage() {
+    if (editingMsgIndex === null) return;
+
+    const newContent = document.getElementById('edit-msg-input').value;
+    // 允许内容为空吗？通常不建议，但如果用户想清空也可以
+
+    try {
+        const res = await fetch('/api/update_message', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({
+                chat_id: currentChatId,
+                index: editingMsgIndex,
+                content: newContent
+            })
+        });
+        const data = await res.json();
+
+        if (data.success) {
+            showToast("消息已更新");
+            closeModal('modal-edit-msg');
+            // 刷新当前对话视图
+            selectChat(currentChatId);
+        } else {
+            showToast(data.error || "更新失败", "error");
+        }
+    } catch (e) {
+        showToast("请求出错", "error");
+    }
+}
+
+
+</script>
+</body>
+</html>

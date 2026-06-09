@@ -1,0 +1,2024 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Great Mind - Memory Console</title>
+
+    <!-- 字体与图标 -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <!-- 代码高亮样式 -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.7.0/styles/atom-one-dark-reasonable.min.css">
+
+    <style>
+        :root {
+            /* 基础色板 - Light */
+            --primary: #4f46e5;       /* Indigo 600 */
+            --primary-hover: #4338ca;
+            --primary-light: #e0e7ff;
+
+            --bg-body: #f8fafc;       /* Slate 50 */
+            --bg-surface: #ffffff;
+            --bg-surface-glass: rgba(255, 255, 255, 0.85);
+
+            --text-main: #0f172a;     /* Slate 900 */
+            --text-sec: #64748b;      /* Slate 500 */
+            --text-muted: #94a3b8;    /* Slate 400 */
+
+            --border: #e2e8f0;        /* Slate 200 */
+            --border-hover: #cbd5e1;
+
+            --accent-perm: #d97706;   /* Amber 600 */
+            --accent-perm-bg: #fffbeb;
+
+            --success: #10b981;
+            --danger: #ef4444;
+
+            --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+            --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+
+            --radius-md: 8px;
+            --radius-lg: 12px;
+            --radius-xl: 16px;
+        }
+
+        [data-theme="dark"] {
+            /* 基础色板 - Dark */
+            --primary: #6366f1;       /* Indigo 500 */
+            --primary-hover: #818cf8;
+            --primary-light: rgba(99, 102, 241, 0.15);
+
+            --bg-body: #020617;       /* Slate 950 */
+            --bg-surface: #0f172a;    /* Slate 900 */
+            --bg-surface-glass: rgba(15, 23, 42, 0.85);
+
+            --text-main: #f1f5f9;     /* Slate 100 */
+            --text-sec: #94a3b8;      /* Slate 400 */
+            --text-muted: #475569;    /* Slate 600 */
+
+            --border: #1e293b;        /* Slate 800 */
+            --border-hover: #334155;
+
+            --accent-perm: #fbbf24;   /* Amber 400 */
+            --accent-perm-bg: rgba(251, 191, 36, 0.1);
+        }
+
+        /* 全局重置 */
+        * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+
+        body {
+            font-family: 'Inter', system-ui, -apple-system, sans-serif;
+            background-color: var(--bg-body);
+            color: var(--text-main);
+            height: 100vh;
+            display: flex;
+            overflow: hidden;
+            transition: background-color 0.3s, color 0.3s;
+        }
+
+        /* 通用工具类 */
+        .glass {
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            background: var(--bg-surface-glass);
+        }
+
+        .btn-icon {
+            width: 36px;
+            height: 36px;
+            border-radius: var(--radius-md);
+            border: 1px solid transparent;
+            background: transparent;
+            color: var(--text-sec);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+        }
+        .btn-icon:hover { background: var(--bg-body); color: var(--text-main); border-color: var(--border); }
+        .btn-icon.active { color: var(--primary); background: var(--primary-light); }
+
+        .tooltip { position: relative; }
+
+        /* 滚动条 */
+        ::-webkit-scrollbar { width: 5px; height: 5px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+        ::-webkit-scrollbar-thumb:hover { background: var(--text-muted); }
+
+        /* ================= 侧边栏 ================= */
+        .sidebar {
+            width: 280px;
+            background: var(--bg-surface);
+            border-right: 1px solid var(--border);
+            display: flex;
+            flex-direction: column;
+            z-index: 50;
+             overflow: hidden; /* 收起时隐藏内容 */
+    white-space: nowrap; /* 防止文字换行 */
+            transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+/* 侧边栏收起状态 (桌面端) */
+.sidebar.collapsed {
+    width: 0;
+    border-right: none;
+}
+
+/* 侧边栏展开/收起按钮 (桌面端显示，移动端隐藏) */
+.desktop-menu-btn {
+    display: flex;
+}
+@media (max-width: 768px) {
+    .desktop-menu-btn { display: none; }
+    /* 移动端逻辑保持原有 .mobile-menu-btn */
+}
+
+/* --- 编辑按钮样式 --- */
+.action-btn.edit:hover {
+    background: rgba(59, 130, 246, 0.1);
+    color: var(--primary);
+}
+        .brand {
+            padding: 24px 20px;
+            font-size: 18px;
+            font-weight: 700;
+            color: var(--text-main);
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            letter-spacing: -0.5px;
+        }
+        .brand i { color: var(--primary); font-size: 20px; }
+
+        .sidebar-controls { padding: 0 16px 16px; }
+
+        .btn-new-chat {
+            width: 100%;
+            padding: 10px;
+            background: var(--primary);
+            color: #fff;
+            border: none;
+            border-radius: var(--radius-md);
+            font-weight: 500;
+            font-size: 14px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            box-shadow: 0 2px 4px rgba(79, 70, 229, 0.2);
+            transition: transform 0.1s, background 0.2s;
+        }
+        .btn-new-chat:hover { background: var(--primary-hover); }
+        .btn-new-chat:active { transform: translateY(1px); }
+
+        .chat-list {
+            flex: 1;
+            overflow-y: auto;
+            padding: 10px 12px;
+        }
+
+        .chat-item {
+            padding: 10px 12px;
+            margin-bottom: 4px;
+            border-radius: var(--radius-md);
+            cursor: pointer;
+            color: var(--text-sec);
+            font-size: 14px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            transition: all 0.2s;
+            group: chat-item;
+        }
+        .chat-item:hover { background: var(--bg-body); color: var(--text-main); }
+        .chat-item.active { background: var(--primary-light); color: var(--primary); font-weight: 500; }
+
+        .chat-item-title {
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            max-width: 200px;
+        }
+
+.chat-actions {
+    display: flex;
+    gap: 4px;
+    opacity: 0;
+    transition: opacity 0.2s;
+}
+        .chat-item:hover .chat-actions { opacity: 1; }
+.chat-actions i {
+    padding: 6px;
+    font-size: 12px;
+    border-radius: 4px;
+    color: var(--text-sec);
+    cursor: pointer;
+    transition: all 0.2s;
+}
+        .chat-actions i:hover { color: var(--danger); background: rgba(239, 68, 68, 0.1); }
+.chat-actions .fa-pen:hover {
+    color: var(--primary);
+    background: var(--primary-light);
+}
+.chat-actions .fa-trash-can:hover {
+    color: var(--danger);
+    background: rgba(239, 68, 68, 0.1);
+}
+        .sidebar-footer {
+            padding: 16px;
+            border-top: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        /* ================= 主区域 ================= */
+        .main {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            position: relative;
+            background: var(--bg-body);
+        }
+
+        /* 顶部栏 */
+        .header {
+            height: 60px;
+            padding: 0 24px;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            z-index: 20;
+            position: sticky;
+            top: 0;
+        }
+
+        .header-left { display: flex; align-items: center; gap: 16px; flex: 1; min-width: 0; }
+
+        .mobile-menu-btn { display: none; } /* Mobile toggle */
+
+        .chat-meta { display: flex; flex-direction: column; min-width: 0; }
+        .chat-title { font-weight: 600; font-size: 15px; color: var(--text-main); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .chat-model { font-size: 11px; color: var(--text-sec); margin-top: 2px; }
+
+        .model-selector {
+            background: transparent;
+            border: none;
+            color: var(--text-sec);
+            font-size: 11px;
+            font-family: inherit;
+            cursor: pointer;
+            padding: 2px 0;
+        }
+        .model-selector:hover { color: var(--primary); }
+
+        .header-actions {
+    display: flex;
+    gap: 12px; /* 增加间距 */
+}
+.btn-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 16px; /* 增加点击区域 */
+    background: var(--bg-surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    color: var(--text-main);
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s;
+    white-space: nowrap; /* 防止文字换行 */
+}
+.btn-header:hover {
+    border-color: var(--primary);
+    color: var(--primary);
+    background: var(--primary-light);
+    transform: translateY(-1px);
+    box-shadow: var(--shadow-sm);
+}
+
+/* --- 等待回复动画 (Typing Indicator) --- */
+.typing-indicator {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    padding: 16px 20px;
+    background: var(--bg-surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    border-bottom-left-radius: 2px;
+    width: fit-content;
+}
+
+.dot {
+    width: 6px;
+    height: 6px;
+    background-color: var(--text-muted);
+    border-radius: 50%;
+    animation: typingBounce 1.4s infinite ease-in-out both;
+}
+
+.dot:nth-child(1) { animation-delay: -0.32s; }
+.dot:nth-child(2) { animation-delay: -0.16s; }
+@keyframes typingBounce {
+    0%, 80%, 100% { transform: scale(0); opacity: 0.6; }
+    40% { transform: scale(1); opacity: 1; }
+}
+        /* 聊天流 */
+        .chat-container {
+            flex: 1;
+            overflow-y: auto;
+            padding: 24px 24px 120px 24px;
+            display: flex;
+            flex-direction: column;
+            gap: 24px;
+            scroll-behavior: smooth;
+        }
+
+        .empty-state {
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            color: var(--text-muted);
+            text-align: center;
+        }
+        .empty-state i { font-size: 48px; margin-bottom: 16px; opacity: 0.5; }
+        .empty-state h3 { font-size: 18px; color: var(--text-main); margin-bottom: 8px; }
+
+        /* 消息气泡 */
+        .msg-row {
+            display: flex;
+            gap: 12px;
+            max-width: 900px;
+            margin: 0 auto;
+            width: 100%;
+        }
+        .msg-row.user { justify-content: flex-end; }
+
+        .avatar {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+            flex-shrink: 0;
+        }
+        .avatar.ai { background: var(--primary); color: white; }
+        .avatar.user { background: var(--text-sec); color: white; order: 2; }
+
+        .bubble {
+            background: var(--bg-surface);
+            padding: 16px 20px;
+            border-radius: var(--radius-lg);
+            border: 1px solid var(--border);
+            color: var(--text-main);
+            box-shadow: var(--shadow-sm);
+            max-width: 85%;
+            position: relative;
+            line-height: 1.6;
+            font-size: 15px;
+        }
+
+        .msg-row.user .bubble {
+            background: var(--primary);
+            color: white;
+            border-color: transparent;
+            border-bottom-right-radius: 2px;
+            order: 1;
+        }
+        .msg-row.model .bubble {
+            border-bottom-left-radius: 2px;
+        }
+
+        /* 记忆状态栏 */
+ /* --- 消息底部工具栏 --- */
+.bubble-footer {
+    display: flex;
+    justify-content: space-between; /* 两端对齐：左边记忆标签，右边操作按钮 */
+    align-items: center;
+    gap: 12px;
+    padding-top: 12px;
+    margin-top: 12px;
+    border-top: 1px dashed var(--border);
+}
+
+.tags-area {
+    display: flex;
+    gap: 8px;
+}
+
+.actions-area {
+    display: flex;
+    gap: 4px;
+    opacity: 0.6;
+    transition: opacity 0.2s;
+}
+.bubble:hover .actions-area { opacity: 1; }
+
+.action-btn {
+    {#background: transparent;#}
+    border: none;
+    color: var(--text-muted);
+    cursor: pointer;
+    font-size: 12px;
+    padding: 4px;
+        background: rgba(0, 0, 0, 0.04);
+    width: auto; /* 允许宽度随文字自适应 */
+    border-radius: 4px;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    transition: all 0.2s;
+}
+.action-btn:hover { background: rgba(0,0,0,0.05); color: var(--text-main); }
+.action-btn.del:hover { background: rgba(239, 68, 68, 0.1); color: var(--danger); }
+/* --- 增大底部按钮体积并支持文字显示 --- */
+.tag, .action-btn {
+    padding: 6px 12px !important;  /* 增加内边距 */
+    font-size: 12px !important;    /* 增加字号 */
+    height: 30px;                  /* 增加高度 */
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    gap: 6px;                      /* 图标与文字的间距 */
+    line-height: 1;
+}
+/* --- 代码块复制按钮 --- */
+.markdown-body pre {
+    position: relative; /* 为绝对定位的按钮做参照 */
+}
+
+.code-copy-btn {
+    position: absolute;
+    top: 6px;
+    right: 6px;
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    color: #a0a0a0;
+    font-size: 12px;
+    padding: 6px 12px;
+     height: 30px;
+    border-radius: 4px;
+    cursor: pointer;
+    opacity: 0;
+    transition: all 0.2s;
+    font-family: sans-serif;
+}
+
+/* 只有鼠标悬停在代码块上时才显示按钮 */
+.markdown-body pre:hover .code-copy-btn {
+    opacity: 1;
+}
+
+.code-copy-btn:hover {
+    background: rgba(255, 255, 255, 0.2);
+    color: white;
+}
+.code-copy-btn.copied {
+    background: #10b981;
+    color: white;
+    border-color: #10b981;
+}
+        .msg-row.user .bubble-footer { border-top-color: rgba(255,255,255,0.2); }
+
+        .tag {
+            font-size: 10px;
+            padding: 2px 8px;
+            border-radius: 12px;
+            cursor: pointer;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            transition: 0.2s;
+            border: 1px solid transparent;
+            user-select: none;
+        }
+
+        /* 状态样式 */
+        .tag-mem-active { background: #ecfdf5; color: #059669; border-color: #a7f3d0; }
+        .tag-mem-inactive { background: var(--bg-body); color: var(--text-muted); }
+        .tag-perm { background: var(--accent-perm-bg); color: var(--accent-perm); border-color: rgba(251, 191, 36, 0.4); }
+
+        [data-theme="dark"] .tag-mem-active { background: rgba(5, 150, 105, 0.2); color: #6ee7b7; border-color: rgba(5, 150, 105, 0.3); }
+
+        /* 输入区域 */
+        .input-wrapper {
+            position: absolute;
+            bottom: 30px;
+            left: 0;
+            right: 0;
+            display: flex;
+            justify-content: center;
+            padding: 0 20px;
+            z-index: 30;
+        }
+
+        .input-box {
+            width: 100%;
+            max-width: 800px;
+            background: var(--bg-surface-glass);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-xl);
+            padding-left: 12px;
+            box-shadow: var(--shadow-lg);
+            display: flex;
+            align-items: flex-end;
+            gap: 8px;
+            backdrop-filter: blur(10px);
+        }
+
+        .input-box textarea {
+            flex: 1;
+            background: transparent;
+            border: none;
+            padding: 12px;
+            max-height: 150px;
+            resize: none;
+            outline: none;
+            font-family: inherit;
+            font-size: 15px;
+            color: var(--text-main);
+            line-height: 1.5;
+        }
+
+        .btn-send {
+            width: 40px;
+            height: 40px;
+            border-radius: 10px;
+            background: var(--primary);
+            color: white;
+            border: none;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+            margin-bottom: 2px;
+        }
+        .btn-send:hover { background: var(--primary-hover); transform: scale(1.05); }
+        .btn-send:disabled { background: var(--text-muted); cursor: not-allowed; transform: none; }
+
+        /* ================= 永久记忆抽屉 (Right Drawer) ================= */
+        .drawer {
+            position: fixed;
+            top: 0;
+            right: -350px;
+            width: 350px;
+            height: 100%;
+            background: var(--bg-surface);
+            border-left: 1px solid var(--border);
+            box-shadow: -5px 0 25px rgba(0,0,0,0.1);
+            z-index: 100;
+            transition: right 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            display: flex;
+            flex-direction: column;
+        }
+        .drawer.open { right: 0; }
+
+        .drawer-header {
+            padding: 20px;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-weight: 600;
+            color: var(--accent-perm);
+        }
+
+        .drawer-body {
+            flex: 1;
+            overflow-y: auto;
+            padding: 20px;
+        }
+
+        .perm-item {
+            background: var(--bg-body);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-md);
+            padding: 12px;
+            margin-bottom: 16px;
+        }
+        .perm-header {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 8px;
+            font-size: 11px;
+            color: var(--text-muted);
+            font-weight: 600;
+        }
+        .perm-edit-area {
+            width: 100%;
+            background: var(--bg-surface);
+            border: 1px solid var(--border);
+            border-radius: 4px;
+            padding: 8px;
+            font-size: 13px;
+            font-family: 'JetBrains Mono', monospace;
+            color: var(--text-main);
+            min-height: 80px;
+            resize: vertical;
+        }
+/* 附件预览区域 */
+.preview-area {
+    width: 100%;
+    display: flex;
+    gap: 10px;
+    padding: 0 12px;
+    margin-bottom: 8px;
+    overflow-x: auto;
+}
+.preview-item {
+    position: relative;
+    width: 60px;
+    height: 60px;
+    border-radius: 8px;
+    border: 1px solid var(--border);
+    background-size: cover;
+    background-position: center;
+    background-color: var(--bg-surface);
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+.preview-item i { font-size: 24px; color: var(--text-muted); }
+.preview-close {
+    position: absolute;
+    top: -5px; right: -5px;
+    background: var(--danger);
+    color: white;
+    border-radius: 50%;
+    width: 16px; height: 16px;
+    font-size: 10px;
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer;
+}
+
+/* 聊天记录中的媒体显示 */
+.msg-media-grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-bottom: 8px;
+}
+.chat-image {
+    max-width: 100%;
+    max-height: 300px;
+    border-radius: 8px;
+    cursor: pointer;
+    border: 1px solid rgba(0,0,0,0.1);
+}
+.chat-file {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 12px;
+    background: rgba(0,0,0,0.05);
+    border-radius: 8px;
+    font-size: 13px;
+    color: var(--text-main);
+}
+/* 修改输入框布局以容纳附件按钮 */
+
+.btn-attach {
+    color: var(--text-sec);
+    background: transparent;
+    border: none;
+    font-size: 18px;
+    padding: 8px;
+    cursor: pointer;
+    transition: 0.2s;
+    margin-bottom: 4px; /* 对齐 */
+}
+.btn-attach:hover { color: var(--primary); }
+        /* ================= 模态框 & 覆盖层 ================= */
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            backdrop-filter: blur(4px);
+            z-index: 200;
+            align-items: center;
+            justify-content: center;
+            opacity: 0;
+            transition: opacity 0.2s;
+        }
+        .modal-overlay.active { display: flex; opacity: 1; }
+
+        .modal {
+            background: var(--bg-surface);
+            width: 90%;
+            max-width: 450px;
+            border-radius: var(--radius-lg);
+            border: 1px solid var(--border);
+            box-shadow: var(--shadow-lg);
+            padding: 24px;
+            transform: scale(0.95);
+            transition: transform 0.2s;
+        }
+        .modal-overlay.active .modal { transform: scale(1); }
+
+        .modal-title { font-size: 18px; font-weight: 600; margin-bottom: 8px; color: var(--text-main); }
+        .modal-desc { font-size: 14px; color: var(--text-sec); margin-bottom: 20px; line-height: 1.5; }
+
+        .modal-input {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid var(--border);
+            border-radius: var(--radius-md);
+            background: var(--bg-body);
+            color: var(--text-main);
+            font-size: 14px;
+            margin-bottom: 20px;
+            outline: none;
+        }
+        .modal-input:focus { border-color: var(--primary); box-shadow: 0 0 0 2px var(--primary-light); }
+
+        .modal-footer { display: flex; justify-content: flex-end; gap: 10px; }
+
+        .btn {
+            padding: 8px 16px;
+            border-radius: var(--radius-md);
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            border: none;
+            transition: 0.2s;
+        }
+        .btn-ghost { background: transparent; color: var(--text-sec); }
+        .btn-ghost:hover { background: var(--bg-body); color: var(--text-main); }
+
+        .btn-primary { background: var(--primary); color: white; }
+        .btn-primary:hover { background: var(--primary-hover); }
+
+        .btn-danger { background: var(--danger); color: white; }
+        .btn-danger:hover { opacity: 0.9; }
+
+        /* ================= Toast 通知 ================= */
+        .toast-container {
+            position: fixed;
+            top: 24px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 300;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        .toast {
+            background: var(--bg-surface);
+            color: var(--text-main);
+            padding: 10px 16px;
+            border-radius: 50px;
+            box-shadow: var(--shadow-lg);
+            border: 1px solid var(--border);
+            font-size: 14px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            animation: slideDown 0.3s cubic-bezier(0.18, 0.89, 0.32, 1.28);
+        }
+        .toast-success i { color: var(--success); }
+        .toast-error i { color: var(--danger); }
+
+        @keyframes slideDown {
+            from { transform: translateY(-20px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+
+        /* 响应式适配 */
+        @media (max-width: 768px) {
+            .sidebar { position: fixed; left: -100%; height: 100%; width: 80%; }
+            .sidebar.open { left: 0; box-shadow: 10px 0 30px rgba(0,0,0,0.2); }
+            .mobile-menu-btn { display: flex; }
+            .msg-row { max-width: 100%; }
+            .bubble { max-width: 92%; }
+            .drawer { width: 100%; right: -100%; }
+            .input-wrapper { padding: 0 10px; bottom: 10px; }
+        }
+
+        /* Markdown 样式微调 */
+        .markdown-body { font-size: 15px; }
+        .markdown-body pre { background: #1e1e1e !important; border-radius: 8px; padding: 12px; }
+        .markdown-body code { font-family: 'JetBrains Mono', monospace; font-size: 13px; }
+    </style>
+</head>
+<body>
+
+<!-- Toast 容器 -->
+<div class="toast-container" id="toast-container"></div>
+
+<!-- 侧边栏 -->
+<div class="sidebar" id="sidebar">
+    <div class="brand">
+        <i class="fa-solid fa-brain"></i>
+        <span>Great Mind</span>
+    </div>
+
+    <div class="sidebar-controls">
+        <button class="btn-new-chat" onclick="openModal('modal-new-chat')">
+            <i class="fa-solid fa-plus"></i> 新建对话
+        </button>
+    </div>
+
+    <div class="chat-list" id="chat-list">
+        <!-- JS 动态填充 -->
+    </div>
+
+    <div class="sidebar-footer">
+        <button class="btn-icon" onclick="toggleTheme()" title="切换主题">
+            <i class="fa-solid fa-moon"></i>
+        </button>
+        <div style="font-size: 10px; color: var(--text-muted);">v2.0 Memory Engine</div>
+    </div>
+</div>
+
+<!-- 主界面 -->
+<div class="main">
+    <!-- 顶部栏 -->
+    <header class="header glass">
+        <div class="header-left">
+            <button class="btn-icon desktop-menu-btn" onclick="toggleSidebarDesktop()" title="收起/展开列表">
+                <i class="fa-solid fa-left-right"></i>
+            </button>
+            <button class="btn-icon mobile-menu-btn" onclick="toggleSidebar()">
+                <i class="fa-solid fa-bars"></i>
+            </button>
+            <div class="chat-meta">
+                <div class="chat-title" id="current-chat-title">未选择对话</div>
+                <select id="model-select" class="model-selector">
+                    <option>Loading models...</option>
+                </select>
+            </div>
+        </div>
+
+<!-- 在 <header> 内的 header-actions 部分 -->
+        <div class="header-actions">
+            <button class="btn-header" onclick="requestSummary()">
+                <i class="fa-solid fa-compress-arrows-alt"></i>
+                <span>浓缩记忆</span>
+            </button>
+            <button class="btn-header" onclick="togglePermDrawer()">
+                <i class="fa-solid fa-book-bookmark" style="color: var(--accent-perm);"></i>
+                <span>永久记忆</span>
+            </button>
+        </div>
+    </header>
+
+    <!-- 聊天内容区 -->
+    <div class="chat-container" id="chat-container">
+        <div class="empty-state">
+            <i class="fa-solid fa-comments"></i>
+            <h3>开始新的旅程</h3>
+            <p>选择左侧对话或创建一个新会话</p>
+        </div>
+    </div>
+
+    <!-- 输入区 -->
+<!-- ... (替换原有的 input-wrapper 部分) ... -->
+
+<div class="input-wrapper">
+    <!-- 新增：文件预览区容器 -->
+    <div id="file-preview-container" class="preview-area" style="display:none;"></div>
+
+    <div class="input-box">
+        <!-- 新增：附件按钮 & 隐藏的文件输入 -->
+        <input type="file" id="file-input" multiple accept="image/*,application/pdf,text/plain" style="display: none;" onchange="handleFileSelect(this)">
+        <button class="btn-attach" onclick="document.getElementById('file-input').click()" title="上传图片/文件">
+            <i class="fa-solid fa-paperclip"></i>
+        </button>
+
+        <textarea id="user-input" rows="1" placeholder="输入消息..." oninput="autoResize(this)"></textarea>
+
+        <button id="send-btn" class="btn-send" onclick="sendMessage()">
+            <i class="fa-solid fa-paper-plane"></i>
+        </button>
+    </div>
+</div>
+</div>
+
+<!-- 右侧抽屉：永久记忆 -->
+<!-- 找到 id="perm-drawer" 的 div，修改 .drawer-header -->
+<div class="drawer" id="perm-drawer">
+    <div class="drawer-header">
+        <div style="display:flex; align-items:center; gap:10px;">
+            <span><i class="fa-solid fa-star"></i> 核心记忆库</span>
+            <!-- 【新增】添加按钮 -->
+            <button class="btn-icon" onclick="openAddPermModal()" title="新建记忆"
+                    style="width:28px; height:28px; background:var(--primary); color:white;">
+                <i class="fa-solid fa-plus" style="font-size:12px;"></i>
+            </button>
+        </div>
+        <button class="btn-icon" onclick="togglePermDrawer()">
+            <i class="fa-solid fa-xmark"></i>
+        </button>
+    </div>
+    <div class="drawer-body" id="perm-list-content">
+        <!-- JS 填充 -->
+    </div>
+</div>
+<!-- 在 <body> 底部，其他模态框附近添加 -->
+<div class="modal-overlay" id="modal-add-perm">
+    <div class="modal">
+        <div class="modal-title">新增永久记忆</div>
+        <div class="modal-desc">直接向核心库写入一条不被遗忘的设定（如：你的名字、特定规则、世界观等）。</div>
+        <textarea id="new-perm-content" class="modal-input"
+                  style="height:120px; resize:none; font-family:'JetBrains Mono';"
+                  placeholder="例如：用户是一名高级 Python 工程师..."></textarea>
+        <div class="modal-footer">
+            <button class="btn btn-ghost" onclick="closeModal('modal-add-perm')">取消</button>
+            <button class="btn btn-primary" onclick="confirmAddPerm()">添加</button>
+        </div>
+    </div>
+</div>
+
+<div class="modal-overlay" id="modal-edit-msg">
+    <div class="modal">
+        <div class="modal-title">编辑消息内容</div>
+        <div class="modal-desc">直接修改历史记录中的文本内容。</div>
+        <textarea id="edit-msg-input" class="modal-input"
+                  style="height:150px; resize:none; font-family:'JetBrains Mono'; line-height:1.5;"></textarea>
+        <div class="modal-footer">
+            <button class="btn btn-ghost" onclick="closeModal('modal-edit-msg')">取消</button>
+            <button class="btn btn-primary" onclick="confirmEditMessage()">保存修改</button>
+        </div>
+    </div>
+</div>
+<!-- 模态框：新建对话 -->
+<div class="modal-overlay" id="modal-new-chat">
+    <div class="modal">
+        <div class="modal-title">新建对话</div>
+        <div class="modal-desc">为新的记忆会话起一个独特的名字。</div>
+        <input type="text" class="modal-input" id="new-chat-name" placeholder="例如: coding-project-alpha" autocomplete="off">
+        <div class="modal-footer">
+            <button class="btn btn-ghost" onclick="closeModal('modal-new-chat')">取消</button>
+            <button class="btn btn-primary" onclick="confirmNewChat()">创建</button>
+        </div>
+    </div>
+</div>
+<div class="modal-overlay" id="modal-rename">
+    <div class="modal">
+        <div class="modal-title">重命名对话</div>
+        <div class="modal-desc">请输入新的对话名称：</div>
+        <input type="text" class="modal-input" id="rename-input" autocomplete="off">
+        <div class="modal-footer">
+            <button class="btn btn-ghost" onclick="closeModal('modal-rename')">取消</button>
+            <button class="btn btn-primary" onclick="confirmRename()">保存</button>
+        </div>
+    </div>
+</div>
+<!-- 模态框：删除确认 -->
+<div class="modal-overlay" id="modal-delete-confirm">
+    <div class="modal">
+        <div class="modal-title" style="color: var(--danger)">删除对话</div>
+        <div class="modal-desc">确定要彻底删除这个吗？此操作无法撤销。</div>
+        <div class="modal-footer">
+            <button class="btn btn-ghost" onclick="closeModal('modal-delete-confirm')">再想想</button>
+            <button class="btn btn-danger" id="btn-confirm-delete">彻底删除</button>
+        </div>
+    </div>
+</div>
+
+<!-- 模态框：浓缩确认 -->
+<div class="modal-overlay" id="modal-summary">
+    <div class="modal" style="max-width: 600px;">
+        <div class="modal-title">✨ 确认浓缩记忆</div>
+        <div class="modal-desc">AI 生成了以下总结，这将替换掉当前的临时记忆。请编辑确认：</div>
+        <textarea id="summary-edit" class="modal-input" style="height: 200px; resize: none; font-family: 'JetBrains Mono';"></textarea>
+        <div class="modal-footer">
+            <button class="btn btn-ghost" onclick="closeModal('modal-summary')">放弃</button>
+            <button class="btn btn-primary" onclick="saveSummary()">确认并替换</button>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/marked/4.3.0/marked.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.7.0/highlight.min.js"></script>
+
+<script>
+    // --- 全局配置 ---
+// --- 修改 index.html 中的配置代码 ---
+
+marked.setOptions({
+    highlight: function(code, lang) {
+        // 1. 检查 hljs 库是否加载成功
+        if (typeof hljs === 'undefined') {
+            console.warn("Highlight.js not loaded");
+            return code;
+        }
+
+        // 2. 检查语言是否有效，无效则使用纯文本
+        const language = hljs.getLanguage(lang) ? lang : 'plaintext';
+
+        try {
+            // 3. 【关键修改】这里必须使用 hljs 对象
+            return hljs.highlight(code, { language }).value;
+        } catch (e) {
+            console.error("Highlight parsing error:", e);
+            return code; // 如果高亮出错，返回原始内容，防止整个页面崩溃
+        }
+    },
+    langPrefix: 'hljs language-', // 配合 highlight.js 的类名
+    breaks: true // 允许回车换行
+});
+
+    let currentChatId = '';
+    let chatToDeleteId = null; // 用于模态框确认删除
+    let chatToRenameId = null;
+    let currentAttachments = [];
+    // --- 初始化 ---
+    window.onload = () => {
+        loadChatList();
+        loadModels();
+        const savedTheme = localStorage.getItem('theme') || 'light';
+        document.documentElement.setAttribute('data-theme', savedTheme);
+
+        // 绑定输入框回车事件
+        const input = document.getElementById('user-input');
+        input.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                sendMessage();
+            }
+        });
+    };
+
+    // --- UI 工具: Toast 通知 ---
+    function showToast(message, type = 'success') {
+        const container = document.getElementById('toast-container');
+        const toast = document.createElement('div');
+        toast.className = `toast toast-${type}`;
+
+        const icon = type === 'success' ? '<i class="fa-solid fa-check-circle"></i>' :
+                     type === 'error' ? '<i class="fa-solid fa-circle-exclamation"></i>' :
+                     '<i class="fa-solid fa-info-circle"></i>';
+
+        toast.innerHTML = `${icon} <span>${message}</span>`;
+        container.appendChild(toast);
+
+        // 3秒后移除
+        setTimeout(() => {
+            toast.style.opacity = '0';
+            toast.style.transform = 'translateY(-20px)';
+            setTimeout(() => toast.remove(), 300);
+        }, 3000);
+    }
+
+    // --- UI 工具: 模态框管理 ---
+    function openModal(id) {
+        document.getElementById(id).classList.add('active');
+        // 如果是输入框模态，自动聚焦
+        const input = document.querySelector(`#${id} input`);
+        if (input) setTimeout(() => input.focus(), 100);
+    }
+
+    function closeModal(id) {
+        document.getElementById(id).classList.remove('active');
+    }
+
+    // --- UI 工具: 输入框自适应高度 ---
+    function autoResize(textarea) {
+        textarea.style.height = 'auto';
+        textarea.style.height = Math.min(textarea.scrollHeight, 150) + 'px';
+    }
+
+    // --- UI 工具: 侧边栏/抽屉切换 ---
+    function toggleSidebar() {
+        document.getElementById('sidebar').classList.toggle('open');
+    }
+
+    function togglePermDrawer() {
+        const drawer = document.getElementById('perm-drawer');
+        drawer.classList.toggle('open');
+        if (drawer.classList.contains('open')) {
+            refreshPermViewerOnly();
+        }
+    }
+
+    function toggleTheme() {
+        const html = document.documentElement;
+        const current = html.getAttribute('data-theme');
+        const next = current === 'dark' ? 'light' : 'dark';
+        html.setAttribute('data-theme', next);
+        localStorage.setItem('theme', next);
+    }
+
+    // --- 核心逻辑: 数据加载 ---
+    {#
+    async function loadModels() {
+    try {
+        const select = document.getElementById('model-select');
+
+        // 1. 定义固定的 Gemini 3 Flash 模型信息
+        const DEFAULT_MODEL_ID = 'models/gemini-3-flash-preview';
+        const DEFAULT_MODEL_NAME = '自控制记忆模型';
+
+        // 2. 直接渲染下拉框，不再执行 fetch 访问 /api/get_models
+        select.innerHTML = '';
+        const opt = document.createElement('option');
+        opt.value = DEFAULT_MODEL_ID;
+        opt.innerText = DEFAULT_MODEL_NAME;
+        select.appendChild(opt);
+
+        // 3. 逻辑优先级：如果有用户之前手动保存的选择，则应用（前提是目前只有这一个选项，通常会默认选中）
+        const saved = localStorage.getItem('selected_model');
+        if (saved && saved === DEFAULT_MODEL_ID) {
+            select.value = saved;
+        } else {
+            // 否则默认选中并保存 Gemini 3 Flash
+            select.value = DEFAULT_MODEL_ID;
+            localStorage.setItem('selected_model', DEFAULT_MODEL_ID);
+        }
+
+        // 4. 保持监听，以便后续如果扩展了其他模型也能正常保存
+        select.onchange = () => localStorage.setItem('selected_model', select.value);
+
+    } catch (e) {
+        console.error("加载模型配置出错:", e);
+        showToast("模型配置失败", "error");
+    }}#}
+async function loadModels() {
+    try {
+        const select = document.getElementById('model-select');
+        const res = await fetch('/api/get_models');
+        const data = await res.json();
+
+            select.innerHTML = '';
+            data.models.forEach(m => {
+                const opt = document.createElement('option');
+                opt.value = m.id;
+                opt.innerText = m.display.replace('models/', '');
+                select.appendChild(opt);
+            });
+
+        // --- 逻辑优先级：LocalStorage > Gemini 3 Flash > 第一个模型 ---
+        const saved = localStorage.getItem('selected_model');
+
+        if (saved && Array.from(select.options).some(o => o.value === saved)) {
+            // 1. 如果有用户手动保存的选择，优先使用
+            select.value = saved;
+        } else {
+            // 2. 否则，自动寻找带有 "gemini-3-flash" 关键词的模型
+            const flashOpt = Array.from(select.options).find(o =>
+                o.value.toLowerCase().includes('gemini-3-flash')
+            );
+            if (flashOpt) {
+                select.value = flashOpt.value;
+                localStorage.setItem('selected_model', select.value);
+            }
+        }
+
+        select.onchange = () => localStorage.setItem('selected_model', select.value);
+    } catch (e) {
+        console.error(e);
+        // 这里的 showToast 需确保您的 index.html 中有定义
+       showToast("模型加载失败", "error");
+    }}
+    async function loadChatList() {
+        const res = await fetch('/api/list_chats');
+        const data = await res.json();
+        const list = document.getElementById('chat-list');
+        list.innerHTML = '';
+
+        data.chats.forEach(id => {
+            const isActive = id === currentChatId ? 'active' : '';
+            const div = document.createElement('div');
+            div.className = `chat-item ${isActive}`;
+            div.onclick = () => selectChat(id);
+        div.innerHTML = `
+            <div class="chat-item-title"><i class="fa-regular fa-comment-dots"></i> ${id}</div>
+            <div class="chat-actions">
+                <i class="fa-solid fa-pen" title="重命名" onclick="openRenameModal(event, '${id}')"></i>
+                <i class="fa-solid fa-trash-can" title="删除" onclick="confirmDeleteChat(event, '${id}')"></i>
+            </div>
+        `;
+            list.appendChild(div);
+        });
+    }
+
+    // --- 核心逻辑: 对话管理 ---
+    async function selectChat(id) {
+        currentChatId = id;
+        document.getElementById('current-chat-title').innerText = id;
+        document.getElementById('sidebar').classList.remove('open'); // 移动端自动收起
+
+        loadChatList(); // 刷新高亮
+
+        const res = await fetch('/api/get_history', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({ chat_id: id })
+        });
+        const data = await res.json();
+
+        // 如果数据为空，显示 Empty State，否则渲染
+        const container = document.getElementById('chat-container');
+        if (data.history.length === 0) {
+            container.innerHTML = `
+                <div class="empty-state">
+                    <i class="fa-solid fa-wind"></i>
+                    <h3>暂无消息</h3>
+                    <p>在下方输入框开始对话</p>
+                </div>`;
+        } else {
+            renderHistory(data.history);
+        }
+
+        // 刷新抽屉
+        if(document.getElementById('perm-drawer').classList.contains('open')) {
+            refreshPermViewerOnly();
+        }
+    }
+// 2. 新增：打开重命名模态框
+function openRenameModal(e, id) {
+    e.stopPropagation(); // 阻止冒泡，不触发进入聊天
+    chatToRenameId = id;
+    const input = document.getElementById('rename-input');
+    input.value = id; // 预填旧名字
+    openModal('modal-rename');
+
+    // 聚焦并全选文本，方便直接修改
+    setTimeout(() => input.select(), 100);
+
+    // 绑定回车保存
+    input.onkeydown = (ev) => {
+        if(ev.key === 'Enter') confirmRename();
+    };
+}
+
+// 3. 新增：确认重命名逻辑
+async function confirmRename() {
+    const input = document.getElementById('rename-input');
+    const newName = input.value.trim();
+
+    if (!newName) return showToast("名称不能为空", "error");
+    if (newName === chatToRenameId) return closeModal('modal-rename'); // 没改动直接关闭
+
+    try {
+        const res = await fetch('/api/rename_chat', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({
+                old_chat_id: chatToRenameId,
+                new_chat_id: newName
+            })
+        });
+        const data = await res.json();
+
+        if (data.error) {
+            showToast(data.error, "error");
+        } else {
+            // 如果当前正在聊天的就是被改名的这个，更新全局ID和标题
+            if (currentChatId === chatToRenameId) {
+                currentChatId = newName;
+                document.getElementById('current-chat-title').innerText = newName;
+            }
+
+            showToast("重命名成功");
+            closeModal('modal-rename');
+            loadChatList(); // 刷新列表
+        }
+    } catch (e) {
+        showToast("请求失败", "error");
+    }
+}
+// --- 1. 发送消息函数 (支持多模态 + 乐观渲染 + 等待动画) ---
+// --- 3. 重写发送消息函数 (支持流式响应 + 附件 + 自动保存) ---
+async function sendMessage() {
+    if (!currentChatId) return showToast("请先选择或新建一个对话", "error");
+
+    const input = document.getElementById('user-input');
+    const btn = document.getElementById('send-btn');
+    const msg = input.value.trim(); // 你移除了 XSS 逻辑，这里保留原样
+    const model = document.getElementById('model-select').value;
+
+    if (!msg && currentAttachments.length === 0) return;
+
+    // 1. UI 准备
+    btn.disabled = true;
+    input.value = '';
+    input.style.height = 'auto';
+
+    // 备份并清空附件，供 Payload 使用
+    const payloadAttachments = [...currentAttachments];
+    currentAttachments = [];
+    document.getElementById('file-preview-container').style.display = 'none';
+    document.getElementById('file-preview-container').innerHTML = '';
+
+    const container = document.getElementById('chat-container');
+    if (container.querySelector('.empty-state')) container.innerHTML = '';
+
+    // 2. 立即渲染用户消息 (乐观 UI)
+    const userRow = document.createElement('div');
+    userRow.className = 'msg-row user';
+
+    // 构造附件预览 HTML (用于立即显示)
+    let attachmentsHtml = '';
+    if (payloadAttachments.length > 0) {
+        attachmentsHtml = '<div class="msg-media-grid">' + payloadAttachments.map(att => {
+            if (att.mime_type.startsWith('image/')) {
+                return `<img src="${att.previewUrl}" class="chat-image">`;
+            } else {
+                return `<div class="chat-file"><i class="fa-solid fa-file"></i> ${att.name}</div>`;
+            }
+        }).join('') + '</div>';
+    }
+
+    // 显示用户消息（不进行防 XSS 处理，因为你要求不要）
+    userRow.innerHTML = `
+        <div class="avatar user"><i class="fa-solid fa-user"></i></div>
+        <div class="bubble user-bubble">
+            ${attachmentsHtml}
+            <div>${msg.replace(/\n/g, '<br>')}</div>
+        </div>`;
+    container.appendChild(userRow);
+
+    // 3. 创建空的 AI 消息气泡 (用于流式填充)
+    const aiRow = document.createElement('div');
+    aiRow.className = 'msg-row model';
+    aiRow.innerHTML = `
+        <div class="avatar ai"><i class="fa-solid fa-robot"></i></div>
+        <div class="bubble ai-bubble-content">
+            <div class="typing-indicator" style="padding:0; margin:0; border:none; background:transparent;">
+                <div class="dot"></div><div class="dot"></div><div class="dot"></div>
+            </div>
+        </div>
+    `;
+    container.appendChild(aiRow);
+    container.scrollTop = container.scrollHeight;
+
+    const aiContentDiv = aiRow.querySelector('.ai-bubble-content');
+    let accumulatedText = "";
+
+    try {
+        // 4. 发起 Fetch 请求
+        const response = await fetch('/api/chat', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({
+                chat_id: currentChatId,
+                message: msg,
+                model: model,
+                attachments: payloadAttachments.map(a => ({
+                    name: a.name,
+                    mime_type: a.mime_type,
+                    data: a.data
+                }))
+            })
+        });
+
+        if (!response.ok) throw new Error("Network response was not ok");
+
+        // 5. 处理流 (Stream Reader)
+        const reader = response.body.getReader();
+        const decoder = new TextDecoder("utf-8");
+        let isFirstChunk = true;
+
+        while (true) {
+            const { done, value } = await reader.read();
+            if (done) break;
+
+            const chunk = decoder.decode(value, { stream: true });
+            accumulatedText += chunk;
+
+            // 收到第一个块时，移除 loading 动画
+            if (isFirstChunk) {
+                isFirstChunk = false;
+                aiContentDiv.innerHTML = '';
+            }
+
+            // 实时渲染 Markdown
+            const rawHtml = marked.parse(accumulatedText);
+            aiContentDiv.innerHTML = `<div class="markdown-body">${rawHtml}</div>`;
+
+            // 保持滚动到底部
+            container.scrollTop = container.scrollHeight;
+        }
+
+        // 6. 流结束后的完美渲染
+        aiContentDiv.innerHTML = `<div class="markdown-body">${marked.parse(accumulatedText)}</div>`;
+        if (window.hljs) aiContentDiv.querySelectorAll('pre code').forEach(hljs.highlightElement);
+        addCodeCopyButtons(aiContentDiv);
+
+        // 这里不再手动追加 footer，因为索引可能已过时，依靠 finally 中的刷新来处理
+
+    } catch (e) {
+        aiContentDiv.innerHTML += `<div style="color:var(--danger); margin-top:10px;">[发送失败: ${e.message}]</div>`;
+        showToast("消息发送中断", "error");
+    } finally {
+        btn.disabled = false;
+        if (!isMobile()) input.focus();
+
+        // --- 关键修复：强制刷新列表以同步索引 ---
+        // 流式传输结束后，后端的历史记录长度增加了2条。
+        // 如果不刷新，前端的旧索引会导致编辑/删除功能错位。
+        // 设置 500ms 延迟是为了等待后端文件写入锁完全释放。
+        setTimeout(() => selectChat(currentChatId), 500);
+    }
+}
+
+// 辅助：文本复制
+function copyTextToClipboard(text) {
+    if (navigator.clipboard && window.isSecureContext) {
+        navigator.clipboard.writeText(text).then(() => showToast("已复制"));
+    } else {
+        // Fallback
+        const textarea = document.createElement('textarea');
+        textarea.value = text;
+        document.body.appendChild(textarea);
+        textarea.select();
+        document.execCommand('copy');
+        document.body.removeChild(textarea);
+        showToast("已复制");
+    }
+}
+
+// --- 2. 历史记录渲染函数 (支持附件显示 + 完整功能按钮) ---
+function renderHistory(history) {
+    const container = document.getElementById('chat-container');
+    container.innerHTML = '';
+
+    history.forEach((msg, index) => {
+        const isUser = msg.role === 'user';
+        const row = document.createElement('div');
+        row.className = `msg-row ${isUser ? 'user' : 'model'}`;
+
+        // 头像
+        const avatar = document.createElement('div');
+        avatar.className = `avatar ${isUser ? 'user' : 'ai'}`;
+        avatar.innerHTML = isUser ? '<i class="fa-solid fa-user"></i>' : '<i class="fa-solid fa-robot"></i>';
+
+        // 1. 处理附件显示 (后端返回的是 base64)
+        let mediaHtml = '';
+if (msg.attachments && msg.attachments.length > 0) {
+    mediaHtml = '<div class="msg-media-grid">';
+    msg.attachments.forEach(att => {
+        let src = '';
+        // 兼容新旧数据结构
+        if (att.file_path) {
+            src = `/uploads/${att.file_path}`; // 指向后端静态路由
+        } else if (att.data) {
+            src = `data:${att.mime_type};base64,${att.data}`; // 旧数据
+        }
+
+        if (att.mime_type.startsWith('image/')) {
+            mediaHtml += `<img src="${src}" class="chat-image" onclick="window.open('${src}')">`;
+        } else {
+            mediaHtml += `<div class="chat-file"><a href="${src}" target="_blank" style="text-decoration:none; color:inherit;"><i class="fa-solid fa-file-lines"></i> ${att.name || '文件'}</a></div>`;
+        }
+    });
+    mediaHtml += '</div>';
+}
+
+        // 2. 处理文本内容 (Markdown渲染)
+        let rawContent = msg.content || ""; // 防止 null
+        let contentHtml = '';
+
+        if (isUser) {
+            // 用户消息不需要 markdown 解析，但需要转义防止 HTML 注入
+            contentHtml = rawContent.replace(/\n/g, '<br>');
+        } else {
+            // AI 消息解析 Markdown 后，必须净化
+            contentHtml = marked.parse(rawContent);
+        }
+
+        // 3. 状态标签逻辑
+        const isMem = msg.is_memory;
+        const isPerm = msg.memory_type === 2;
+        const memClass = isMem ? 'tag-mem-active' : 'tag-mem-inactive';
+
+        // 4. 构建气泡 HTML
+        const bubble = document.createElement('div');
+        bubble.className = 'bubble';
+        bubble.innerHTML = `
+            ${mediaHtml}
+            <div class="msg-content markdown-body">${contentHtml}</div>
+
+            <div class="bubble-footer">
+                <!-- 左侧：记忆标签 (带文字描述) -->
+                <div class="tags-area">
+                    <div id="btn-mem-${index}" class="tag ${memClass}" onclick="toggleMemory(${index}, 'status')">
+                        ${isMem ? '<i class="fa-solid fa-brain"></i> 记忆中' : '<i class="fa-solid fa-bed"></i> 已遗忘'}
+                    </div>
+                    <div id="btn-type-${index}" class="tag ${isPerm ? 'tag-perm' : 'tag-mem-inactive'}" onclick="toggleMemory(${index}, 'type')">
+                        ${isPerm ? '<i class="fa-solid fa-thumbtack"></i> 永久' : '<i class="fa-solid fa-hourglass"></i> 临时'}
+                    </div>
+                </div>
+
+                <!-- 右侧：操作按钮 (带文字描述 + 图标) -->
+                <div class="actions-area">
+                    <button class="action-btn" title="复制整条消息" onclick="copyMessageText(${index})">
+                        <i class="fa-regular fa-copy"></i> 复制
+                    </button>
+                   <!-- 【新增】编辑按钮 -->
+                    <button class="action-btn edit" title="编辑内容" onclick="openEditModal(${index})">
+                        <i class="fa-solid fa-pen-to-square"></i> 编辑
+                    </button>
+                    <button class="action-btn del" title="删除此条消息" onclick="deleteMessageItem(${index})">
+                        <i class="fa-solid fa-trash"></i> 删除
+                    </button>
+                </div>
+            </div>
+        `;
+
+        row.appendChild(avatar);
+        row.appendChild(bubble);
+        container.appendChild(row);
+
+        // 5. 为气泡内的代码块添加独立复制按钮
+        addCodeCopyButtons(bubble);
+    });
+
+    // 缓存当前历史数据，供复制功能使用
+    window.currentHistoryCache = history;
+
+    // 滚动到底部
+    container.scrollTop = container.scrollHeight;
+}
+// --- 新增：为代码块添加复制按钮 ---
+function addCodeCopyButtons(element) {
+    // 找到该元素下所有的 pre 标签
+    const pres = element.querySelectorAll('pre');
+    pres.forEach(pre => {
+        // 创建按钮
+        const btn = document.createElement('button');
+        btn.className = 'code-copy-btn';
+        btn.innerHTML = '<i class="fa-regular fa-copy"></i> 复制';
+
+        // 点击事件
+        btn.onclick = () => {
+            // 获取 pre 内部的 code 文本
+            const code = pre.querySelector('code').innerText;
+            navigator.clipboard.writeText(code).then(() => {
+                // 成功反馈
+                btn.innerHTML = '<i class="fa-solid fa-check"></i> 已复制';
+                btn.classList.add('copied');
+                setTimeout(() => {
+                    btn.innerHTML = '<i class="fa-regular fa-copy"></i> 复制';
+                    btn.classList.remove('copied');
+                }, 2000);
+            });
+
+        };
+
+        // 将按钮插入到 pre 标签内 (highlight.js 不会覆盖 pre 的子元素，只会处理 code)
+        pre.appendChild(btn);
+    });
+}
+
+// --- 新增：复制整条消息 ---
+function copyMessageText(index) {
+    if (window.currentHistoryCache && window.currentHistoryCache[index]) {
+        const text = window.currentHistoryCache[index].content;
+        navigator.clipboard.writeText(text).then(() => {
+            showToast("消息内容已复制");
+        }).catch(() => {
+            showToast("复制失败", "error");
+        });
+    }
+}
+
+// --- 新增：删除单条消息 ---
+// --- 交互逻辑: 删除消息 ---
+function deleteMessageItem(index) {
+    // 1. 打开模态框
+    openModal('modal-delete-confirm');
+
+    // 2. 绑定删除按钮点击事件
+    const btn = document.getElementById('btn-confirm-delete');
+    btn.onclick = async () => {
+        try {
+            const res = await fetch('/api/delete_message', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({ chat_id: currentChatId, index: index })
+            });
+            const data = await res.json();
+
+            if (data.success) {
+                showToast("消息已删除");
+                // 重新加载并渲染当前对话
+                selectChat(currentChatId);
+            } else {
+                showToast("删除失败", "error");
+            }
+        } catch (e) {
+            showToast("请求错误", "error");
+        } finally {
+            // 3. 关闭模态框
+            closeModal('modal-delete-confirm');
+        }
+    };
+}
+
+function isMobile() {
+    return window.innerWidth <= 768;
+}
+    // --- 交互逻辑: 记忆控制 ---
+    async function toggleMemory(index, mode) {
+        // 视觉反馈：点击时变成半透明
+        const btnId = mode === 'status' ? `btn-mem-${index}` : `btn-type-${index}`;
+        const btn = document.getElementById(btnId);
+        btn.style.opacity = '0.5';
+
+        try {
+            const res = await fetch('/api/toggle_memory', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({ chat_id: currentChatId, index: index, mode: mode })
+            });
+            const data = await res.json();
+
+            if (data.success) {
+                // 原地更新 UI，不刷新整个列表，体验更好
+                const item = data.item;
+                const isMem = item.is_memory;
+                const isPerm = item.memory_type === 2;
+
+                // 更新状态按钮
+                const memBtn = document.getElementById(`btn-mem-${index}`);
+                memBtn.className = `tag ${isMem ? 'tag-mem-active' : 'tag-mem-inactive'}`;
+                memBtn.innerHTML = isMem ? '<i class="fa-solid fa-brain"></i> 记忆中' : '<i class="fa-solid fa-bed"></i> 已遗忘';
+
+                // 更新类型按钮 (处理联动)
+                const typeBtn = document.getElementById(`btn-type-${index}`);
+                typeBtn.className = `tag ${isPerm ? 'tag-perm' : 'tag-mem-inactive'}`;
+                typeBtn.innerHTML = isPerm ? '<i class="fa-solid fa-thumbtack"></i> 永久' : '<i class="fa-solid fa-hourglass"></i> 临时';
+
+                showToast(mode === 'status' ? '记忆状态已更新' : '记忆类型已变更');
+
+                // 如果侧边抽屉开着，刷新它
+                if (document.getElementById('perm-drawer').classList.contains('open')) {
+                    refreshPermViewerOnly();
+                }
+            }
+        } catch (e) {
+            showToast("操作失败", "error");
+        } finally {
+            btn.style.opacity = '1';
+        }
+    }
+
+    // --- 交互逻辑: 新建对话 ---
+    function confirmNewChat() {
+        const input = document.getElementById('new-chat-name');
+        const name = input.value.trim();
+        if (!name) return showToast("请输入对话名称", "error");
+
+        currentChatId = name;
+        selectChat(name); // 这会自动创建文件（如果是新逻辑）或者加载空历史
+        closeModal('modal-new-chat');
+        input.value = '';
+        showToast("对话已创建");
+    }
+
+    // --- 交互逻辑: 删除对话 ---
+    function confirmDeleteChat(e, id) {
+        e.stopPropagation();
+        chatToDeleteId = id;
+        openModal('modal-delete-confirm');
+
+        // 绑定删除按钮一次性事件
+        const btn = document.getElementById('btn-confirm-delete');
+        btn.onclick = async () => {
+            await fetch('/api/delete_chat', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({ chat_id: chatToDeleteId })
+            });
+
+            if (currentChatId === chatToDeleteId) {
+                currentChatId = '';
+                document.getElementById('current-chat-title').innerText = "未选择对话";
+                document.getElementById('chat-container').innerHTML = `
+                    <div class="empty-state">
+                        <i class="fa-solid fa-trash-can"></i>
+                        <h3>已删除</h3>
+                    </div>`;
+            }
+
+            loadChatList();
+            closeModal('modal-delete-confirm');
+            showToast("对话已彻底删除");
+        };
+    }
+
+    // --- 交互逻辑: 浓缩记忆 ---
+    async function requestSummary() {
+        if (!currentChatId) return showToast("请先选择对话", "error");
+
+        showToast("正在请求 AI 浓缩记忆...", "info");
+        try {
+            const model = document.getElementById('model-select').value;
+            const res = await fetch('/api/summarize_memory', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({ chat_id: currentChatId, model: model })
+            });
+            const data = await res.json();
+
+            if (data.summary_proposal) {
+                document.getElementById('summary-edit').value = data.summary_proposal;
+                openModal('modal-summary');
+            } else {
+                showToast(data.error || "没有可浓缩的内容", "error");
+            }
+        } catch (e) {
+            showToast("请求超时或出错", "error");
+        }
+    }
+
+    async function saveSummary() {
+        const summary = document.getElementById('summary-edit').value;
+        const res = await fetch('/api/confirm_summary', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({ chat_id: currentChatId, summary: summary })
+        });
+        const data = await res.json();
+
+        if (data.success) {
+            closeModal('modal-summary');
+            renderHistory(data.history);
+            showToast("记忆已成功浓缩");
+        }
+    }
+
+    // --- 交互逻辑: 永久记忆抽屉 ---
+    async function refreshPermViewerOnly() {
+        if (!currentChatId) return;
+
+        const res = await fetch('/api/get_history', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({ chat_id: currentChatId })
+        });
+        const data = await res.json();
+        const content = document.getElementById('perm-list-content');
+
+        const perms = data.history.map((m, idx) => ({...m, idx})).filter(m => m.memory_type === 2);
+
+        if (perms.length === 0) {
+            content.innerHTML = `
+                <div style="text-align:center; padding:40px; color:var(--text-sec);">
+                    <p>暂无永久记忆</p>
+                    <p style="font-size:12px; margin-top:8px;">点击消息下方的“临时”按钮将其固定。</p>
+                </div>`;
+            return;
+        }
+
+    content.innerHTML = perms.map(m => `
+        <div class="perm-item">
+            <div class="perm-header">
+                <span><i class="fa-solid fa-fingerprint"></i> MSG #${m.idx}</span>
+                <div style="display:flex; gap:8px;">
+                    <i class="fa-solid fa-trash-can" style="cursor:pointer; color:var(--text-muted); transition:0.2s;"
+                       onmouseover="this.style.color='var(--danger)'"
+                       onmouseout="this.style.color='var(--text-muted)'"
+                       title="彻底删除此条记忆"
+                       onclick="deletePermItem(${m.idx})"></i>
+
+                    <i class="fa-solid fa-floppy-disk" style="cursor:pointer; color:var(--success);"
+                       title="保存修改"
+                       onclick="saveDirectEdit(${m.idx}, this)"></i>
+                </div>
+            </div>
+            <textarea id="edit-perm-${m.idx}" class="perm-edit-area">${m.content}</textarea>
+        </div>
+    `).join('');
+    }
+// 2. 新增：处理添加永久记忆
+function openAddPermModal() {
+    if(!currentChatId) return showToast("请先选择对话", "error");
+    document.getElementById('new-perm-content').value = ''; // 清空
+    openModal('modal-add-perm');
+    setTimeout(() => document.getElementById('new-perm-content').focus(), 100);
+}
+
+async function confirmAddPerm() {
+    const content = document.getElementById('new-perm-content').value.trim();
+    if(!content) return showToast("内容不能为空", "error");
+
+    try {
+        const res = await fetch('/api/add_permanent_memory', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({ chat_id: currentChatId, content: content })
+        });
+        const data = await res.json();
+
+        if(data.success) {
+            closeModal('modal-add-perm');
+            showToast("永久记忆已添加");
+
+            // 刷新抽屉
+            refreshPermViewerOnly();
+            // 如果主界面有显示历史，也可以选择刷新主界面: selectChat(currentChatId);
+        }
+    } catch(e) {
+        showToast("添加失败", "error");
+    }
+}
+
+// 3. 新增：处理删除逻辑
+// --- 交互逻辑: 删除永久记忆 ---
+function deletePermItem(index) {
+    // 1. 打开模态框
+    openModal('modal-delete-confirm');
+
+    // 2. 绑定删除按钮点击事件
+    const btn = document.getElementById('btn-confirm-delete');
+    btn.onclick = async () => {
+        try {
+            const res = await fetch('/api/delete_message', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({ chat_id: currentChatId, index: index })
+            });
+
+            const data = await res.json();
+            if(data.success) {
+                showToast("记忆已删除");
+                // 刷新记忆列表
+                refreshPermViewerOnly();
+            } else {
+                showToast(data.error || "删除失败", "error");
+            }
+        } catch(e) {
+            showToast("请求出错", "error");
+        } finally {
+            // 3. 关闭模态框
+            closeModal('modal-delete-confirm');
+        }
+    };
+}
+    async function saveDirectEdit(index, iconBtn) {
+        const textarea = document.getElementById(`edit-perm-${index}`);
+        const newContent = textarea.value;
+
+        // 简单动画反馈
+        iconBtn.className = "fa-solid fa-spinner fa-spin";
+
+        try {
+            await fetch('/api/update_message', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({ chat_id: currentChatId, index: index, content: newContent })
+            });
+
+            iconBtn.className = "fa-solid fa-check";
+            setTimeout(() => iconBtn.className = "fa-solid fa-floppy-disk", 2000);
+            showToast("永久记忆已更新");
+
+            // 同步主界面
+            selectChat(currentChatId);
+        } catch (e) {
+            iconBtn.className = "fa-solid fa-xmark";
+            showToast("保存失败", "error");
+        }
+    }
+
+// --- 新增：处理文件选择 ---
+async function handleFileSelect(input) {
+    const files = Array.from(input.files);
+    if(files.length === 0) return;
+
+    for (const file of files) {
+        // 简单限制大小 (例如 5MB)
+        if (file.size > 5 * 1024 * 1024) {
+            showToast(`文件 ${file.name} 太大，跳过`, "error");
+            continue;
+        }
+
+        const base64Data = await toBase64(file);
+        // 去掉 data:image/png;base64, 前缀，后端 API 只需要 raw base64
+        const rawBase64 = base64Data.split(',')[1];
+
+        currentAttachments.push({
+            name: file.name,
+            mime_type: file.type,
+            data: rawBase64,
+            previewUrl: base64Data //用于前端预览
+        });
+    }
+
+    renderPreviews();
+    input.value = ''; // 重置 input 以便重复选择同名文件
+}
+
+function toBase64(file) {
+    return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.readAsDataURL(file);
+        reader.onload = () => resolve(reader.result);
+        reader.onerror = error => reject(error);
+    });
+}
+
+function renderPreviews() {
+    const container = document.getElementById('file-preview-container');
+    if (currentAttachments.length === 0) {
+        container.style.display = 'none';
+        container.innerHTML = '';
+        return;
+    }
+
+    container.style.display = 'flex';
+    container.innerHTML = currentAttachments.map((file, index) => {
+        let bgStyle = '';
+        let iconHtml = '<i class="fa-solid fa-file"></i>';
+
+        if (file.mime_type.startsWith('image/')) {
+            bgStyle = `background-image: url('${file.previewUrl}');`;
+            iconHtml = ''; // 图片显示背景，不显示图标
+        } else if (file.mime_type === 'application/pdf') {
+            iconHtml = '<i class="fa-solid fa-file-pdf" style="color:#ef4444"></i>';
+        }
+
+        return `
+            <div class="preview-item" style="${bgStyle}">
+                ${iconHtml}
+                <div class="preview-close" onclick="removeAttachment(${index})">
+                    <i class="fa-solid fa-times"></i>
+                </div>
+            </div>`;
+    }).join('');
+
+    // 自动调整输入框位置（如果需要）
+}
+
+function removeAttachment(index) {
+    currentAttachments.splice(index, 1);
+    renderPreviews();
+}
+// --- 1. 桌面端侧边栏切换 ---
+function toggleSidebarDesktop() {
+    const sidebar = document.getElementById('sidebar');
+    sidebar.classList.toggle('collapsed');
+}
+
+// --- 2. 编辑消息逻辑 ---
+let editingMsgIndex = null; // 全局变量暂存当前编辑的索引
+
+function openEditModal(index) {
+    if (!window.currentHistoryCache || !window.currentHistoryCache[index]) return;
+
+    editingMsgIndex = index;
+    const originalContent = window.currentHistoryCache[index].content;
+
+    const textarea = document.getElementById('edit-msg-input');
+    textarea.value = originalContent;
+
+    openModal('modal-edit-msg');
+}
+
+async function confirmEditMessage() {
+    if (editingMsgIndex === null) return;
+
+    const newContent = document.getElementById('edit-msg-input').value;
+    // 允许内容为空吗？通常不建议，但如果用户想清空也可以
+
+    try {
+        const res = await fetch('/api/update_message', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({
+                chat_id: currentChatId,
+                index: editingMsgIndex,
+                content: newContent
+            })
+        });
+        const data = await res.json();
+
+        if (data.success) {
+            showToast("消息已更新");
+            closeModal('modal-edit-msg');
+            // 刷新当前对话视图
+            selectChat(currentChatId);
+        } else {
+            showToast(data.error || "更新失败", "error");
+        }
+    } catch (e) {
+        showToast("请求出错", "error");
+    }
+}
+
+
+</script>
+</body>
+</html>
