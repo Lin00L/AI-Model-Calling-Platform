@@ -163,25 +163,25 @@ class APIKeyManager:
 # --- 你可以在这里自定义每个 key 的显示名称（name） ---
 my_keys = {
     "google": [
-        {"name": "Gemini-Key 主号", "key": "AIzaSyDfAbdrdtrXDwrC-qp2uE3E8Rl39X1Q82o"},
-        {"name": "Gemini-Key 备用", "key": "AIzaSyCPrkZ9zP3M_Ik6WA-EuMK2rkpr9fq1Owc"},
+        {"name": "Gemini-Key 主号", "key": ""},
+        {"name": "Gemini-Key 备用", "key": ""},
     ],
     "openai": [
         {"name": "OpenAI-Key 1", "key": "sk-..."},
         {"name": "OpenAI-Key 2", "key": "sk-..."},
     ],
     "siliconflow": [
-        {"name": "硅基流动-主号", "key": "sk-pbedkkksykxrxicoodjlhclipkybvufoakcngddnyicwppme"},
+        {"name": "硅基流动-主号", "key": ""},
         {"name": "硅基流动-备用", "key": "sf-..."},
     ],
     "modelscope"
     : [
         {
-            "name": "ModelScope-SDKToken 主号", "key": "ms-2914f814-20a7-4ab6-a0af-956ba92b172d"
+            "name": "ModelScope-SDKToken 主号", "key": ""
         },
     ],
     "longcat": [
-        {"name": "LongCat-Key 主号", "key": "ak_2S89rR3js05l0UL9X46hy6G22w506"},
+        {"name": "LongCat-Key 主号", "key": ""},
     ],
 }
 
